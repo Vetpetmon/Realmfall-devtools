@@ -30,3 +30,9 @@ The Devtools are written in C, which is far more performant and does not require
 
 ### Why C?
 Easier to write, runs faster than Java, and the mental illnesses of the Salt of Hope is a case study to look into.
+
+# Licenses
+
+The Realmfall Devkit is licensed under the GNU General Public License.
+
+cJSON is bundled with its custom license. Source: [GitHub - cJSON](https://github.com/DaveGamble/cJSON)
