@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <limits.h>
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 
 
@@ -22,6 +26,51 @@ typedef struct {
     Class class;
 } Character;
 
+// Forward declaration of createEvoJSON
+void createEvoJSON(cJSON *jsonObj, Character character, int evoStage);
+
+// Create directories recursively like `mkdir -p`
+int mkdir_p(const char *path, mode_t mode) {
+    if (path == NULL || *path == '\0') {
+        errno = EINVAL;
+        return -1;
+    }
+
+    char tmp[PATH_MAX];
+    size_t len = strlen(path);
+    if (len >= sizeof(tmp)) {
+        errno = ENAMETOOLONG;
+        return -1;
+    }
+
+    // Copy path and strip trailing '/'
+    strcpy(tmp, path);
+    if (len > 1 && tmp[len - 1] == '/') {
+        tmp[len - 1] = '\0';
+    }
+
+    // Iterate and create each component
+    for (char *p = tmp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = '\0';
+            if (mkdir(tmp, mode) != 0) {
+                if (errno != EEXIST) {
+                    *p = '/';
+                    return -1;
+                }
+            }
+            *p = '/';
+        }
+    }
+
+    // Create final path
+    if (mkdir(tmp, mode) != 0) {
+        if (errno != EEXIST) {
+            return -1;
+        }
+    }
+    return 0;
+}
 
 int main() {
     // Initialize the main 4 classes
@@ -29,6 +78,11 @@ int main() {
     Class rangedClass = {1, 1, 0.0, 0.08, 0.0, 0.0}; // Ranged class
     Class defenseClass = {2, 2, 0.0, 0.0, 0.0, 0.05}; // Defense class
     Class mageClass = {1, 1, 0.0, 0.0, 0.08, 0.0}; // Mage class
+
+    // Strings for File paths
+    char powerFilepath[100] = "powers/flavors/";
+    char originFilepath[100] = "origins/";
+    char rankedFilepath[100] = "origins/ranks/";
 
     // Veriables used to store user selections
     Class selectedClass;
@@ -201,6 +255,7 @@ int main() {
     printf("\nCharacter Summary:\n");
     printf("Name: %s\n", newCharacter.name);
     printf("Text Color: %s\n", newCharacter.textColor);
+    printf("Secondary Text Color: %s\n", newCharacter.secondaryColor);
     printf("Stats per Rank:\n");
     printf("\tHealth: +%d, \n", newCharacter.class.healthPerRank);
     printf("\tArmor: +%d, \n", newCharacter.class.armorPerRank);
@@ -213,9 +268,10 @@ int main() {
     // Ask user if the details are correct
     char confirm;
     printf("Are these details correct? (y/n): ");
-    scanf("%c", &confirm);
-    getchar(); // consume newline character left by previous scanf
-    if (confirm != 'y' && confirm != 'Y') {
+    scanf(" %c", &confirm);
+    // Convert to lowercase
+    confirm = tolower(confirm);
+    if (confirm != 'y') {
         printf("Character creation cancelled. Please run the program again to create a new character.\n");
         // Free allocated memory
         free(newCharacter.name);
@@ -223,19 +279,75 @@ int main() {
         free(newCharacter.secondaryColor);
         return 0; // Still a normal exit.
     }
+
+    // Ensure base directories exist (create parents as needed)
+    if (mkdir_p(powerFilepath, 0755) != 0) {
+        perror("Error creating power directory");
+    }
+    if (mkdir_p(originFilepath, 0755) != 0) {
+        perror("Error creating origins directory");
+    }
+    if (mkdir_p(rankedFilepath, 0755) != 0) {
+        perror("Error creating ranks directory");
+    }
+
+    // Create character-specific directories under powers/flavors
+    char characterDir[256];
+    strcpy(characterDir, powerFilepath);
+    strcat(characterDir, newCharacter.name);
+    if (mkdir_p(characterDir, 0755) != 0) {
+        perror("Error creating character directory");
+    }
+    char evo0Dir[256];
+    strcpy(evo0Dir, characterDir);
+    strcat(evo0Dir, "/0star");
+    if (mkdir_p(evo0Dir, 0755) != 0) {
+        perror("Error creating evo0 directory");
+    }
     
 
-    cJSON *evo1JSON = cJSON_CreateObject();
+    cJSON *evo0JSON = cJSON_CreateObject();
 
+    createEvoJSON(evo0JSON, newCharacter, 0);
+
+    char *evo0String = cJSON_PrintUnformatted(evo0JSON);
+    // cat strings to form filepath
+    char evo0Filepath[200];
+    strcat(strcpy(evo0Filepath, powerFilepath), newCharacter.name);
+    strcat(evo0Filepath, "/0star/evo.json");
+
+    // Print contents of filepath for debugging
+    printf("Generated JSON content:\n%s\n", evo0Filepath);
+    
+    FILE *evo0File = fopen(evo0Filepath, "w");
+    if (evo0File == NULL) {
+        printf("Error creating evo.json file.\n");
+        // Free allocated memory
+        free(newCharacter.name);
+        free(newCharacter.textColor);
+        free(newCharacter.secondaryColor);
+        cJSON_Delete(evo0JSON);
+        free(evo0String);
+        return 1; // indicate error
+    }
+    // We want to prettify the JSON output for easier reading
+    char *prettyEvo0String = cJSON_Print(evo0JSON);
+
+    printf("%s\n", prettyEvo0String);
+    fputs(prettyEvo0String, evo0File);
+    fclose(evo0File);
+    cJSON_free(prettyEvo0String);
+    free(evo0String);
+    cJSON_Delete(evo0JSON);
 
     return 0; // normal exit
 }
 
-cJSON *createEvoJSON(cJSON *jsonObj, Character character) {
+void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddStringToObject(jsonObj, "name", "Soulstone Stuffs");
     cJSON_AddStringToObject(jsonObj, "description", "Handles resource bar and evolving.");
     cJSON_AddBoolToObject(jsonObj, "hidden", cJSON_True);
-    cJSON_AddStringToObject(jsonObj, "type", "origins:resource");
+    cJSON_AddStringToObject(jsonObj, "type", "origins:multiple");
     // cJSON_AddItemToObject(jsonObj, "soulcount",);
 
 }
