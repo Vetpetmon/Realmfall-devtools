@@ -1,0 +1,1 @@
+gcc ranked_builder.c .\cjson\cJSON.c .\cjson\cJSON_Utils.c -Ic:\cjson -o .\output\ranked_builder

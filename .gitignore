@@ -1,2 +1,5 @@
 .vscode
 build
+output
+.exe
+output/ranked_builder.exe
