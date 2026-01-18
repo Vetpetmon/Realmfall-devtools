@@ -12,6 +12,18 @@
                 "CMAKE_CXX_COMPILER": "C:/TDM-GCC-64/bin/g++.exe",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
+        },
+        {
+            "name": "GCCLin",
+            "displayName": "GCC 15.2.1 x86_64-pc-linux-gnu",
+            "description": "Using compilers: C = /usr/sbin/gcc, CXX = /usr/sbin/g++",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/sbin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/sbin/g++",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
         }
     ]
 }
