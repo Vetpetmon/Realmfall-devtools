@@ -29,6 +29,8 @@ typedef struct {
 // Forward declaration of createEvoJSON
 void createEvoJSON(cJSON *jsonObj, Character character, int evoStage);
 
+void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage);
+
 // Create directories recursively like `mkdir -p`
 int mkdir_p(const char *path, mode_t mode) {
     if (path == NULL || *path == '\0') {
@@ -305,42 +307,108 @@ int main() {
         perror("Error creating evo0 directory");
     }
     
+    // Create other rank directories as needed based on newCharacter.ranks
+    for (int i = 0; i < newCharacter.ranks; i++) {
+        char rankDir[256];
+        sprintf(rankDir, "%s/%dstar", characterDir, i);
+        if (mkdir_p(rankDir, 0755) != 0) {
+            perror("Error creating rank directory");
+        }
+        // create evo.json files in each directory
+        cJSON *evoJSON = cJSON_CreateObject();
 
-    cJSON *evo0JSON = cJSON_CreateObject();
+        createEvoJSON(evoJSON, newCharacter, i);
+        // cat strings to form filepath
+        char evoFilepath[200];
+        strcat(strcpy(evoFilepath, powerFilepath), newCharacter.name);
+        char rankStr[100];
+        sprintf(rankStr, "/%dstar/evo.json", i);
+        strcat(evoFilepath, rankStr);
+        FILE *evoFile = fopen(evoFilepath, "w");
+        if (evoFile == NULL) {
+            printf("Error creating evo.json file for rank %d.\n", i);
+            cJSON_Delete(evoJSON);
+            continue; // skip to next rank
+        }
+        // We want to prettify the JSON output for easier reading
+        char *prettyEvoString = cJSON_Print(evoJSON);
+        printf("%s\n", prettyEvoString);
+        fputs(prettyEvoString, evoFile);
+        cJSON_free(prettyEvoString);
+        printf("evo.json file created successfully at %s\n", evoFilepath);
+        fclose(evoFile);
+        cJSON_Delete(evoJSON);
 
-    createEvoJSON(evo0JSON, newCharacter, 0);
-
-    char *evo0String = cJSON_PrintUnformatted(evo0JSON);
-    // cat strings to form filepath
-    char evo0Filepath[200];
-    strcat(strcpy(evo0Filepath, powerFilepath), newCharacter.name);
-    strcat(evo0Filepath, "/0star/evo.json");
-
-    // Print contents of filepath for debugging
-    printf("Generated JSON content:\n%s\n", evo0Filepath);
-    
-    FILE *evo0File = fopen(evo0Filepath, "w");
-    if (evo0File == NULL) {
-        printf("Error creating evo.json file.\n");
-        // Free allocated memory
-        free(newCharacter.name);
-        free(newCharacter.textColor);
-        free(newCharacter.secondaryColor);
-        cJSON_Delete(evo0JSON);
-        free(evo0String);
-        return 1; // indicate error
     }
-    // We want to prettify the JSON output for easier reading
-    char *prettyEvo0String = cJSON_Print(evo0JSON);
+    // Make final rank directory for preventsouls.json
+    char finalRankDir[256];
+    sprintf(finalRankDir, "%s/%s/%dstar", powerFilepath, newCharacter.name, newCharacter.ranks);
+    if (mkdir_p(finalRankDir, 0755) != 0) {
+        perror("Error creating final rank directory");
+    }
 
-    printf("%s\n", prettyEvo0String);
-    fputs(prettyEvo0String, evo0File);
-    fclose(evo0File);
-    cJSON_free(prettyEvo0String);
-    free(evo0String);
-    cJSON_Delete(evo0JSON);
+    // Create the preventsouls.json in the final rank directory
+    cJSON *noSoulstoneJSON = cJSON_CreateObject();
+    createNoSoulstoneJSON(noSoulstoneJSON, newCharacter, newCharacter.ranks);
+    // cat strings to form filepath
+    char noSoulstoneFilepath[200];
+    strcat(strcpy(noSoulstoneFilepath, powerFilepath), newCharacter.name);
+    char noSoulstoneRankStr[100];
+    sprintf(noSoulstoneRankStr, "/%dstar/preventsouls.json", newCharacter.ranks);
+    strcat(noSoulstoneFilepath, noSoulstoneRankStr);
+    printf("Creating preventsouls.json at %s\n", noSoulstoneFilepath);
+    FILE *noSoulstoneFile = fopen(noSoulstoneFilepath, "w");
+    if (noSoulstoneFile == NULL) {
+        printf("Error creating preventsouls.json file.\n");
+    } else {
+        // We want to prettify the JSON output for easier reading
+        char *prettyNoSoulstoneString = cJSON_Print(noSoulstoneJSON);
+        printf("%s\n", prettyNoSoulstoneString);
+        fputs(prettyNoSoulstoneString, noSoulstoneFile);
+        cJSON_free(prettyNoSoulstoneString);
+        printf("preventsouls.json file created successfully at %s\n", noSoulstoneFilepath);
+        fclose(noSoulstoneFile);
+    }
+    cJSON_Delete(noSoulstoneJSON);
+
+    printf("Character creation completed successfully!\n");
 
     return 0; // normal exit
+}
+
+void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage) {
+    cJSON_AddStringToObject(jsonObj, "name", "No Soulstone Stuffs");
+    cJSON_AddStringToObject(jsonObj, "description", "Prevents using soulstone when at max evolution stage.");
+    cJSON_AddBoolToObject(jsonObj, "hidden", cJSON_True);
+    cJSON_AddStringToObject(jsonObj, "type", "origins:multiple");
+
+    // preventsoul
+    cJSON *itemUsePreventObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(itemUsePreventObj, "type", "origins:prevent_item_use");
+    // item_condition
+    cJSON *itemConditionObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(itemConditionObj, "type", "origins:ingredient");
+    cJSON *itemConditionIngredientObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(itemConditionIngredientObj, "item", "bisccel:soulstone");
+
+    cJSON_AddItemToObject(itemConditionObj, "ingredient", itemConditionIngredientObj);
+    cJSON_AddItemToObject(itemUsePreventObj, "item_condition", itemConditionObj);
+    // Now add to main jsonObj
+    cJSON_AddItemToObject(jsonObj, "preventsoul", itemUsePreventObj);
+    // Soulcount action_on_callback
+    cJSON *soulcountCallbackObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(soulcountCallbackObj, "type", "origins:action_on_callback");
+    // entity_action_chosen
+    cJSON *entityActionChosenObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(entityActionChosenObj, "type", "origins:execute_command");
+    // We need to cat!
+    char commandStr[200];
+    sprintf(commandStr, "scoreboard players set @s bisccel.soulcount %d", evoStage); // Set to max
+    cJSON_AddStringToObject(entityActionChosenObj, "command", commandStr);
+    cJSON_AddItemToObject(soulcountCallbackObj, "entity_action_chosen", entityActionChosenObj);
+    cJSON_AddBoolToObject(soulcountCallbackObj, "execute_chosen_when_orb", cJSON_True);
+
+    cJSON_AddItemToObject(jsonObj, "soulcount", soulcountCallbackObj); // Add to main jsonObj
 }
 
 void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
@@ -459,7 +527,7 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddStringToObject(action8, "particle", "minecraft:end_rod");
     cJSON_AddNumberToObject(action8, "count", 20);
     cJSON_AddNumberToObject(action8, "speed", 0.2);
-    cJSON_AddItemToObject(action8, "spread", positionObj);
+    cJSON_AddItemToObject(action8, "spread", cJSON_Duplicate(positionObj, 1));
     cJSON_AddItemToArray(actionsArray, action8); // Add eighth action
 
     // Ninth action: spawn particle
@@ -468,7 +536,7 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddStringToObject(action9, "particle", "minecraft:wax_off");
     cJSON_AddNumberToObject(action9, "count", 20);
     cJSON_AddNumberToObject(action9, "speed", 10);
-    cJSON_AddItemToObject(action9, "spread", positionObj);
+    cJSON_AddItemToObject(action9, "spread", cJSON_Duplicate(positionObj, 1));
     cJSON_AddItemToArray(actionsArray, action9); // Add ninth action
 
     cJSON_AddItemToObject(maxActionObj, "actions", actionsArray);
