@@ -460,8 +460,8 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON *action1 = cJSON_CreateObject();
     cJSON_AddStringToObject(action1, "type", "origins:execute_command");
     // We need to cat!
-    char commandStr[200];
-    sprintf(commandStr, "function bisccel:ranks/%s/%dstar", character.name, evoStage + 1);
+    char commandStr[300];
+    sprintf(commandStr, "origin set @s bisccel:rank bisccel:ranks/%s/%dstar", character.name, evoStage + 1);
     cJSON_AddStringToObject(action1, "command", commandStr);
     cJSON_AddItemToArray(actionsArray, action1); // Add first action
 
