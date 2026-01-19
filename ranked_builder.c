@@ -540,8 +540,12 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddItemToObject(action9, "spread", cJSON_Duplicate(positionObj, 1));
     cJSON_AddItemToArray(actionsArray, action9); // Add ninth action
 
+    // cJSON_AddItemToObject(maxActionObj, "actions", actionsArray);
+    // attach maxActionObj to soulcountObj
     cJSON_AddItemToObject(maxActionObj, "actions", actionsArray);
-    cJSON_AddItemToObject(jsonObj, "max_action", maxActionObj);
+    cJSON_AddItemToObject(soulcountObj, "max_action", maxActionObj);
+    // Now add soulcountObj to main jsonObj
+    cJSON_AddItemToObject(jsonObj, "soulcount", soulcountObj);
 
     // soulincrease item
     cJSON *soulIncreaseObj = cJSON_CreateObject();
