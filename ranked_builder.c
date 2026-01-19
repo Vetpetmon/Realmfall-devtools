@@ -441,12 +441,13 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
 
     cJSON_AddItemToObject(itemConditionsObj, "ingredient", itemConditionsIngredientObj);
     cJSON_AddItemToObject(hudConditionsObj, "item_condition", itemConditionsObj);
+    
+    cJSON_AddArrayToObject(hudConditionsObj, "slots"); // Empty array for slots
+    cJSON_AddStringToObject(hudConditionsObj, "slot", "weapon.mainhand");
+    cJSON_AddStringToObject(hudConditionsObj, "comparison", "!=");
+    cJSON_AddItemToObject(hudConditionsObj, "compare_to", cJSON_CreateNumber(0)); 
 
     cJSON_AddItemToObject(hudRenderObj, "condition", hudConditionsObj);
-    cJSON_AddArrayToObject(hudRenderObj, "slots"); // Empty array for slots
-    cJSON_AddStringToObject(hudRenderObj, "slot", "weapon.mainhand");
-    cJSON_AddStringToObject(hudRenderObj, "comparison", "!=");
-    cJSON_AddItemToObject(hudRenderObj, "compare_to", cJSON_CreateNumber(0)); 
     // Now we nest
     cJSON_AddItemToObject(soulcountObj, "hud_render", hudRenderObj);
     cJSON_AddItemToObject(jsonObj, "soulcount", soulcountObj);
@@ -483,7 +484,7 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     // Fourth action: play sound
     cJSON *action4 = cJSON_CreateObject();
     cJSON_AddStringToObject(action4, "type", "origins:play_sound");
-    cJSON_AddStringToObject(action4, "sound", "minecraft:minecraft:item.trident.thunder");
+    cJSON_AddStringToObject(action4, "sound", "minecraft:item.trident.thunder");
     cJSON_AddNumberToObject(action4, "volume", 1.0);
     cJSON_AddNumberToObject(action4, "pitch", 1.5);
     cJSON_AddItemToArray(actionsArray, action4); // Add fourth action
@@ -507,32 +508,32 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
 
     // seventh action: spawn particle
     cJSON *action7 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action7, "type", "origins:spawn_particle");
+    cJSON_AddStringToObject(action7, "type", "origins:spawn_particles");
     cJSON_AddStringToObject(action7, "particle", "minecraft:flame");
     cJSON_AddNumberToObject(action7, "count", 50);
     cJSON_AddNumberToObject(action7, "speed", 0.2);
     // Position object
     // We will reuse this 3 more times, so create once
     cJSON *positionObj = cJSON_CreateObject();
-    cJSON_AddStringToObject(positionObj, "x", "0");
-    cJSON_AddStringToObject(positionObj, "y", "0.5");
-    cJSON_AddStringToObject(positionObj, "z", "0");
+    cJSON_AddNumberToObject(positionObj, "x", 0);
+    cJSON_AddNumberToObject(positionObj, "y", 0.5);
+    cJSON_AddNumberToObject(positionObj, "z", 0);
     cJSON_AddItemToObject(action7, "spread", positionObj);
 
     cJSON_AddItemToArray(actionsArray, action7); // Add seventh action
 
-    // Eigth action: spawn particle
+    // Eigth action: spawn particles
     cJSON *action8 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action8, "type", "origins:spawn_particle");
+    cJSON_AddStringToObject(action8, "type", "origins:spawn_particles");
     cJSON_AddStringToObject(action8, "particle", "minecraft:end_rod");
     cJSON_AddNumberToObject(action8, "count", 20);
     cJSON_AddNumberToObject(action8, "speed", 0.2);
     cJSON_AddItemToObject(action8, "spread", cJSON_Duplicate(positionObj, 1));
     cJSON_AddItemToArray(actionsArray, action8); // Add eighth action
 
-    // Ninth action: spawn particle
+    // Ninth action: spawn particles
     cJSON *action9 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action9, "type", "origins:spawn_particle");
+    cJSON_AddStringToObject(action9, "type", "origins:spawn_particles");
     cJSON_AddStringToObject(action9, "particle", "minecraft:wax_off");
     cJSON_AddNumberToObject(action9, "count", 20);
     cJSON_AddNumberToObject(action9, "speed", 10);
