@@ -26,10 +26,14 @@ typedef struct {
     Class class;
 } Character;
 
-// Forward declaration of createEvoJSON
+// Creates a power rank JSON object
 void createEvoJSON(cJSON *jsonObj, Character character, int evoStage);
 
+// Creates a no soulstone power JSON object for the maximum rank
 void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage);
+
+// Creates an origin rank JSON object
+void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage);
 
 // Create directories recursively like `mkdir -p`
 int mkdir_p(const char *path, mode_t mode) {
@@ -608,5 +612,53 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddBoolToObject(resetSoulObj, "execute_chosen_when_orb", cJSON_True);
 
     cJSON_AddItemToObject(jsonObj, "reset_soul", resetSoulObj);
+
+}
+
+void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage) {
+
+    char starFilled = '★'; // Unicode for filled star
+    char starEmpty = '☆'; // Unicode for empty star
+
+
+    char nameStr[100];
+    // Example for 1 star: "[★☆☆☆☆☆]" for 6 ranks
+    strcpy(nameStr, "[");
+    for (int i = 0; i < character.ranks; i++) {
+        if (i <= evoStage) {
+            strncat(nameStr, &starFilled, 1);
+        } else {
+            strncat(nameStr, &starEmpty, 1);
+        }
+    }
+    strcat(nameStr, "]");
+    cJSON_AddStringToObject(jsonObj, "name", nameStr);
+    char descriptionStr[200];
+    sprintf(descriptionStr, "Collect %d Lesser Soulstones to upgrade", 20 + (evoStage * 20));
+    cJSON_AddStringToObject(jsonObj, "description", descriptionStr);
+    
+    // powers array
+    cJSON *powersArray = cJSON_CreateArray();
+    // Add preventsouls power only if at max rank
+    if (evoStage == character.ranks) {
+        char noSoulPowerStr[300];
+        sprintf(noSoulPowerStr, "bisccel:flavors/%s/%dstar/preventsouls", character.name, evoStage);
+        cJSON_AddItemToArray(powersArray, cJSON_CreateString(noSoulPowerStr));
+    } // else add evo power 
+    else {
+        char nextEvoPowerStr[200];
+        sprintf(nextEvoPowerStr, "bisccel:flavors/%s/%dstar/evo", character.name, evoStage);
+        cJSON_AddItemToArray(powersArray, cJSON_CreateString(nextEvoPowerStr));
+    }
+    // Add to main jsonObj
+    cJSON_AddItemToObject(jsonObj, "powers", powersArray);
+
+    // Icon obj
+    cJSON *iconObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(iconObj, "item", "bisccel:soulstone");
+    cJSON_AddItemToObject(jsonObj, "icon", iconObj);
+
+    cJSON_AddBoolToObject(jsonObj, "unchoosable", cJSON_True);
+    cJSON_AddNumberToObject(jsonObj, "impact", 0);
 
 }
