@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
+#include <wchar.h>
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 
 
@@ -312,36 +313,65 @@ int main() {
     }
     
     // Create other rank directories as needed based on newCharacter.ranks
-    for (int i = 0; i < newCharacter.ranks; i++) {
-        char rankDir[256];
-        sprintf(rankDir, "%s/%dstar", characterDir, i);
-        if (mkdir_p(rankDir, 0755) != 0) {
-            perror("Error creating rank directory");
-        }
-        // create evo.json files in each directory
-        cJSON *evoJSON = cJSON_CreateObject();
+    for (int i = 0; i < newCharacter.ranks+1; i++) {
+        if (i < newCharacter.ranks) {
+            char rankDir[256];
+            sprintf(rankDir, "%s/%dstar", characterDir, i);
+            if (mkdir_p(rankDir, 0755) != 0) {
+                perror("Error creating rank directory");
+            }
+            // create evo.json files in each directory
+            cJSON *evoJSON = cJSON_CreateObject();
 
-        createEvoJSON(evoJSON, newCharacter, i);
-        // cat strings to form filepath
-        char evoFilepath[200];
-        strcat(strcpy(evoFilepath, powerFilepath), newCharacter.name);
-        char rankStr[100];
-        sprintf(rankStr, "/%dstar/evo.json", i);
-        strcat(evoFilepath, rankStr);
-        FILE *evoFile = fopen(evoFilepath, "w");
-        if (evoFile == NULL) {
-            printf("Error creating evo.json file for rank %d.\n", i);
+            createEvoJSON(evoJSON, newCharacter, i);
+            // cat strings to form filepath
+            char evoFilepath[200];
+            strcat(strcpy(evoFilepath, powerFilepath), newCharacter.name);
+            char rankStr[100];
+            sprintf(rankStr, "/%dstar/evo.json", i);
+            strcat(evoFilepath, rankStr);
+            FILE *evoFile = fopen(evoFilepath, "w");
+            if (evoFile == NULL) {
+                printf("Error creating evo.json file for rank %d.\n", i);
+                cJSON_Delete(evoJSON);
+                continue; // skip to next rank
+            }
+            // We want to prettify the JSON output for easier reading
+            char *prettyEvoString = cJSON_Print(evoJSON);
+            //printf("%s\n", prettyEvoString);
+            fputs(prettyEvoString, evoFile);
+            cJSON_free(prettyEvoString);
+            printf("evo.json file created successfully at %s\n", evoFilepath);
+            fclose(evoFile);
             cJSON_Delete(evoJSON);
+        }
+
+        // Repeat for createRankOriginJSON
+        char originRankDir[256];
+        sprintf(originRankDir, "%s%s/%dstar", rankedFilepath, newCharacter.name, i);
+        if (mkdir_p(originRankDir, 0755) != 0) {
+            perror("Error creating origin rank directory");
+        }
+        cJSON *rankOriginJSON = cJSON_CreateObject();
+        createRankOriginJSON(rankOriginJSON, newCharacter, i);
+        // cat strings to form filepath
+        char originFilepathFull[200];
+        strcat(strcpy(originFilepathFull, rankedFilepath), newCharacter.name);
+        char originRankStr[100];
+        sprintf(originRankStr, "/%dstar.json", i);
+        strcat(originFilepathFull, originRankStr);
+        FILE *originFile = fopen(originFilepathFull, "w");
+        if (originFile == NULL) {
+            printf("Error creating origin rank JSON file for rank %d.\n", i);
+            cJSON_Delete(rankOriginJSON);
             continue; // skip to next rank
         }
-        // We want to prettify the JSON output for easier reading
-        char *prettyEvoString = cJSON_Print(evoJSON);
-        printf("%s\n", prettyEvoString);
-        fputs(prettyEvoString, evoFile);
-        cJSON_free(prettyEvoString);
-        printf("evo.json file created successfully at %s\n", evoFilepath);
-        fclose(evoFile);
-        cJSON_Delete(evoJSON);
+        char *prettyOriginString = cJSON_Print(rankOriginJSON);
+        fputs(prettyOriginString, originFile);
+        cJSON_free(prettyOriginString);
+        printf("Origin rank JSON file created successfully at %s\n", originFilepathFull);
+        fclose(originFile);
+        cJSON_Delete(rankOriginJSON);
 
     }
     // Make final rank directory for preventsouls.json
@@ -365,9 +395,7 @@ int main() {
     if (noSoulstoneFile == NULL) {
         printf("Error creating preventsouls.json file.\n");
     } else {
-        // We want to prettify the JSON output for easier reading
         char *prettyNoSoulstoneString = cJSON_Print(noSoulstoneJSON);
-        printf("%s\n", prettyNoSoulstoneString);
         fputs(prettyNoSoulstoneString, noSoulstoneFile);
         cJSON_free(prettyNoSoulstoneString);
         printf("preventsouls.json file created successfully at %s\n", noSoulstoneFilepath);
@@ -617,19 +645,15 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
 
 void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage) {
 
-    char starFilled = '★'; // Unicode for filled star
-    char starEmpty = '☆'; // Unicode for empty star
-
+    const char *starFilled = "★"; // Unicode for filled star
+    const char *starEmpty = "☆"; // Unicode for empty star
 
     char nameStr[100];
     // Example for 1 star: "[★☆☆☆☆☆]" for 6 ranks
     strcpy(nameStr, "[");
     for (int i = 0; i < character.ranks; i++) {
-        if (i <= evoStage) {
-            strncat(nameStr, &starFilled, 1);
-        } else {
-            strncat(nameStr, &starEmpty, 1);
-        }
+        const char *star = (i <= evoStage-1) ? starFilled : starEmpty;
+        strncat(nameStr, star, sizeof(nameStr) - strlen(nameStr) - 1);
     }
     strcat(nameStr, "]");
     cJSON_AddStringToObject(jsonObj, "name", nameStr);
