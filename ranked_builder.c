@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
-#include <wchar.h>
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 
 
@@ -35,6 +34,18 @@ void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage);
 
 // Creates an origin rank JSON object
 void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage);
+
+// Helper: create a play_sound action object
+cJSON *create_play_sound_action(const char *sound, double volume, double pitch);
+
+// Helper: create an execute_command action object
+cJSON *create_execute_command_action(const char *command);
+
+// Helper: create a change_resource action object
+cJSON *create_change_resource_action(const char *resource, double change, const char *operation);
+
+// Helper: create a spawn_particles action object
+cJSON *create_spawn_particles_action(const char *particle, int count, double speed, cJSON *spread, int duplicate_spread);
 
 // Create directories recursively like `mkdir -p`
 int mkdir_p(const char *path, mode_t mode) {
@@ -77,6 +88,55 @@ int mkdir_p(const char *path, mode_t mode) {
         }
     }
     return 0;
+}
+
+
+// Helper implementation: create a play_sound action object
+cJSON *create_play_sound_action(const char *sound, double volume, double pitch) {
+    cJSON *action = cJSON_CreateObject();
+    cJSON_AddStringToObject(action, "type", "origins:play_sound");
+    cJSON_AddStringToObject(action, "sound", sound);
+    cJSON_AddNumberToObject(action, "volume", volume);
+    cJSON_AddNumberToObject(action, "pitch", pitch);
+    return action;
+}
+
+
+// Helper implementation: create an execute_command action object
+cJSON *create_execute_command_action(const char *command) {
+    cJSON *action = cJSON_CreateObject();
+    cJSON_AddStringToObject(action, "type", "origins:execute_command");
+    cJSON_AddStringToObject(action, "command", command);
+    return action;
+}
+
+
+// Helper implementation: create a change_resource action object
+cJSON *create_change_resource_action(const char *resource, double change, const char *operation) {
+    cJSON *action = cJSON_CreateObject();
+    cJSON_AddStringToObject(action, "type", "origins:change_resource");
+    cJSON_AddStringToObject(action, "resource", resource);
+    cJSON_AddNumberToObject(action, "change", change);
+    cJSON_AddStringToObject(action, "operation", operation);
+    return action;
+}
+
+
+// Helper implementation: create a spawn_particles action object
+cJSON *create_spawn_particles_action(const char *particle, int count, double speed, cJSON *spread, int duplicate_spread) {
+    cJSON *action = cJSON_CreateObject();
+    cJSON_AddStringToObject(action, "type", "origins:spawn_particles");
+    cJSON_AddStringToObject(action, "particle", particle);
+    cJSON_AddNumberToObject(action, "count", count);
+    cJSON_AddNumberToObject(action, "speed", speed);
+    if (spread != NULL) {
+        if (duplicate_spread) {
+            cJSON_AddItemToObject(action, "spread", cJSON_Duplicate(spread, 1));
+        } else {
+            cJSON_AddItemToObject(action, "spread", spread);
+        }
+    }
+    return action;
 }
 
 int main() {
@@ -431,12 +491,10 @@ void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON *soulcountCallbackObj = cJSON_CreateObject();
     cJSON_AddStringToObject(soulcountCallbackObj, "type", "origins:action_on_callback");
     // entity_action_chosen
-    cJSON *entityActionChosenObj = cJSON_CreateObject();
-    cJSON_AddStringToObject(entityActionChosenObj, "type", "origins:execute_command");
-    // We need to cat!
+    // entity_action_chosen (execute command)
     char commandStr[200];
     sprintf(commandStr, "scoreboard players set @s bisccel.soulcount %d", evoStage); // Set to max
-    cJSON_AddStringToObject(entityActionChosenObj, "command", commandStr);
+    cJSON *entityActionChosenObj = create_execute_command_action(commandStr);
     cJSON_AddItemToObject(soulcountCallbackObj, "entity_action_chosen", entityActionChosenObj);
     cJSON_AddBoolToObject(soulcountCallbackObj, "execute_chosen_when_orb", cJSON_True);
 
@@ -489,88 +547,41 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddStringToObject(maxActionObj, "type", "origins:and");
     // Actions array
     cJSON *actionsArray = cJSON_CreateArray();
-    cJSON *action1 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action1, "type", "origins:execute_command");
-    // We need to cat!
+    // First action: execute command (set origin rank)
     char commandStr[300];
     sprintf(commandStr, "origin set @s bisccel:rank bisccel:ranks/%s/%dstar", character.name, evoStage + 1);
-    cJSON_AddStringToObject(action1, "command", commandStr);
-    cJSON_AddItemToArray(actionsArray, action1); // Add first action
+    cJSON *action1 = create_execute_command_action(commandStr);
+    cJSON_AddItemToArray(actionsArray, action1);
 
     // Second action: run command, tellraw
-    cJSON *action2 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action2, "type", "origins:execute_command");
+    // Second action: tellraw (execute command)
     char tellrawCommand[400];
     sprintf(tellrawCommand, "tellraw @s [{\"text\":\"<\"},{\"selector\":\"@s\",\"bold\":true,\"color\":\"%s\"},{\"text\":\"> PLACEHOLDER \"},{\"text\":\"\\n\"},{\"selector\":\"@s\",\"italic\":true,\"color\":\"%s\"},{\"text\":\" has upgraded to %d star!\",\"italic\":true,\"color\":\"%s\"}]", character.textColor, character.secondaryColor, evoStage + 1, character.secondaryColor);
-    cJSON_AddStringToObject(action2, "command", tellrawCommand);
-    cJSON_AddItemToArray(actionsArray, action2); // Add second action
+    cJSON *action2 = create_execute_command_action(tellrawCommand);
+    cJSON_AddItemToArray(actionsArray, action2);
 
     // Third action; play sound
-    cJSON *action3 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action3, "type", "origins:play_sound");
-    cJSON_AddStringToObject(action3, "sound", "minecraft:block.respawn_anchor.charge");
-    cJSON_AddNumberToObject(action3, "volume", 1.0);
-    cJSON_AddNumberToObject(action3, "pitch", 0.5);
-    cJSON_AddItemToArray(actionsArray, action3); // Add third action
+    cJSON *action3 = create_play_sound_action("minecraft:block.respawn_anchor.charge", 1.0, 0.5);
+    cJSON_AddItemToArray(actionsArray, action3);
+    cJSON *action4 = create_play_sound_action("minecraft:item.trident.thunder", 1.0, 1.5);
+    cJSON_AddItemToArray(actionsArray, action4);
+    cJSON *action5 = create_play_sound_action("minecraft:entity.evoker.cast_spell", 1.0, 0.75);
+    cJSON_AddItemToArray(actionsArray, action5);
+    cJSON *action6 = create_play_sound_action("minecraft:block.anvil.fall", 1.0, 0.5);
+    cJSON_AddItemToArray(actionsArray, action6); 
 
-    // Fourth action: play sound
-    cJSON *action4 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action4, "type", "origins:play_sound");
-    cJSON_AddStringToObject(action4, "sound", "minecraft:item.trident.thunder");
-    cJSON_AddNumberToObject(action4, "volume", 1.0);
-    cJSON_AddNumberToObject(action4, "pitch", 1.5);
-    cJSON_AddItemToArray(actionsArray, action4); // Add fourth action
-
-    // fifth action: sound effect
-    cJSON *action5 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action5, "type", "origins:play_sound");
-    cJSON_AddStringToObject(action5, "sound", "minecraft:entity.evoker.cast_spell");
-    cJSON_AddNumberToObject(action5, "volume", 1.0);
-    cJSON_AddNumberToObject(action5, "pitch", 0.75);
-    cJSON_AddItemToArray(actionsArray, action5); // Add fifth action
-
-
-    // sixth action: sound effect
-    cJSON *action6 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action6, "type", "origins:play_sound");
-    cJSON_AddStringToObject(action6, "sound", "minecraft:block.anvil.fall");
-    cJSON_AddNumberToObject(action6, "volume", 1.0);
-    cJSON_AddNumberToObject(action6, "pitch", 0.5);
-    cJSON_AddItemToArray(actionsArray, action6); // Add sixth action
-
-    // seventh action: spawn particle
-    cJSON *action7 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action7, "type", "origins:spawn_particles");
-    cJSON_AddStringToObject(action7, "particle", "minecraft:flame");
-    cJSON_AddNumberToObject(action7, "count", 50);
-    cJSON_AddNumberToObject(action7, "speed", 0.2);
-    // Position object
-    // We will reuse this 3 more times, so create once
+    // Position object for particles (reused)
     cJSON *positionObj = cJSON_CreateObject();
     cJSON_AddNumberToObject(positionObj, "x", 0);
     cJSON_AddNumberToObject(positionObj, "y", 0.5);
     cJSON_AddNumberToObject(positionObj, "z", 0);
-    cJSON_AddItemToObject(action7, "spread", positionObj);
 
-    cJSON_AddItemToArray(actionsArray, action7); // Add seventh action
-
-    // Eigth action: spawn particles
-    cJSON *action8 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action8, "type", "origins:spawn_particles");
-    cJSON_AddStringToObject(action8, "particle", "minecraft:end_rod");
-    cJSON_AddNumberToObject(action8, "count", 20);
-    cJSON_AddNumberToObject(action8, "speed", 0.2);
-    cJSON_AddItemToObject(action8, "spread", cJSON_Duplicate(positionObj, 1));
-    cJSON_AddItemToArray(actionsArray, action8); // Add eighth action
-
-    // Ninth action: spawn particles
-    cJSON *action9 = cJSON_CreateObject();
-    cJSON_AddStringToObject(action9, "type", "origins:spawn_particles");
-    cJSON_AddStringToObject(action9, "particle", "minecraft:wax_off");
-    cJSON_AddNumberToObject(action9, "count", 20);
-    cJSON_AddNumberToObject(action9, "speed", 10);
-    cJSON_AddItemToObject(action9, "spread", cJSON_Duplicate(positionObj, 1));
-    cJSON_AddItemToArray(actionsArray, action9); // Add ninth action
+    cJSON *action7 = create_spawn_particles_action("minecraft:flame", 50, 0.2, positionObj, 0);
+    cJSON_AddItemToArray(actionsArray, action7);
+    cJSON *action8 = create_spawn_particles_action("minecraft:end_rod", 20, 0.2, positionObj, 1);
+    cJSON_AddItemToArray(actionsArray, action8);
+    cJSON *action9 = create_spawn_particles_action("minecraft:wax_off", 20, 10, positionObj, 1);
+    cJSON_AddItemToArray(actionsArray, action9); 
 
     // cJSON_AddItemToObject(maxActionObj, "actions", actionsArray);
     // attach maxActionObj to soulcountObj
@@ -583,15 +594,10 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON *soulIncreaseObj = cJSON_CreateObject();
     cJSON_AddStringToObject(soulIncreaseObj, "type", "origins:action_on_item_use");
     //entity_action
-    cJSON *entityActionObj = cJSON_CreateObject();
-    cJSON_AddStringToObject(entityActionObj, "type", "origins:change_resource");
-    // This has to be cat
+    // entity_action: change_resource
     char resourceStr[100];
     sprintf(resourceStr, "bisccel:flavors/%s/%dstar/evo_soulcount", character.name, evoStage);
-    cJSON_AddStringToObject(entityActionObj, "resource", resourceStr);
-    cJSON_AddNumberToObject(entityActionObj, "change", 1);
-    cJSON_AddStringToObject(entityActionObj, "operation", "add");
-
+    cJSON *entityActionObj = create_change_resource_action(resourceStr, 1, "add");
     cJSON_AddItemToObject(soulIncreaseObj, "entity_action", entityActionObj);
     // item_condition
     cJSON *itemConditionObj = cJSON_CreateObject();
@@ -617,21 +623,15 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     // Actions array
     cJSON *resetActionsArray = cJSON_CreateArray();
     cJSON *resetAction1 = cJSON_CreateObject();
-    cJSON_AddStringToObject(resetAction1, "type", "origins:change_resource");
-    // This has to be cat
+    // first action: change_resource (reset)
     char resetResourceStr[200];
     sprintf(resetResourceStr, "bisccel:flavors/%s/%dstar/evo_soulcount", character.name, evoStage);
-    cJSON_AddStringToObject(resetAction1, "resource", resetResourceStr);
-    cJSON_AddNumberToObject(resetAction1, "change", 0);
-    cJSON_AddStringToObject(resetAction1, "operation", "set");
-    cJSON_AddItemToArray(resetActionsArray, resetAction1); // Add first action
-    // second action: execute command
-    cJSON *resetAction2 = cJSON_CreateObject();
-    cJSON_AddStringToObject(resetAction2, "type", "origins:execute_command");
-    // nned to assemble string
+    cJSON *resetAction1_dup = create_change_resource_action(resetResourceStr, 0, "set");
+    cJSON_AddItemToArray(resetActionsArray, resetAction1_dup); // Add first action
+    // second action: execute command (set starcount)
     char resetCommandStr[200];
     sprintf(resetCommandStr, "scoreboard players set @s bisccel.starcount %d", evoStage);
-    cJSON_AddStringToObject(resetAction2, "command", resetCommandStr);
+    cJSON *resetAction2 = create_execute_command_action(resetCommandStr);
     cJSON_AddItemToArray(resetActionsArray, resetAction2); // Add second action
 
     cJSON_AddItemToObject(entityActionChosenObj, "actions", resetActionsArray);
