@@ -7,6 +7,10 @@
 #include <limits.h>
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 
 // Class Struct
 typedef struct {
@@ -48,6 +52,16 @@ cJSON *create_change_resource_action(const char *resource, double change, const 
 cJSON *create_spawn_particles_action(const char *particle, int count, double speed, cJSON *spread, int duplicate_spread);
 
 // Create directories recursively like `mkdir -p`
+// Platform-agnostic mkdir wrapper: on Windows use _mkdir(path), on POSIX use mkdir(path, mode)
+static int ag_mkdir(const char *path, mode_t mode) {
+#ifdef _WIN32
+    (void)mode;
+    return _mkdir(path);
+#else
+    return mkdir(path, mode);
+#endif
+}
+
 int mkdir_p(const char *path, mode_t mode) {
     if (path == NULL || *path == '\0') {
         errno = EINVAL;
@@ -71,7 +85,7 @@ int mkdir_p(const char *path, mode_t mode) {
     for (char *p = tmp + 1; *p; p++) {
         if (*p == '/') {
             *p = '\0';
-            if (mkdir(tmp, mode) != 0) {
+            if (ag_mkdir(tmp, mode) != 0) {
                 if (errno != EEXIST) {
                     *p = '/';
                     return -1;
@@ -82,7 +96,7 @@ int mkdir_p(const char *path, mode_t mode) {
     }
 
     // Create final path
-    if (mkdir(tmp, mode) != 0) {
+    if (ag_mkdir(tmp, mode) != 0) {
         if (errno != EEXIST) {
             return -1;
         }
