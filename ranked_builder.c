@@ -5,62 +5,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
+#include "rfcharacters.h"
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
-
-#ifdef _WIN32
-#include <direct.h>
-#endif
-
-
-// Class Struct
-typedef struct {
-    int healthPerRank;
-    int armorPerRank;
-    double meleeDamagePerRank; // +percent
-    double rangedDamagePerRank; // +percent
-    double generalDamagePerRank; // +percent
-    double damageResistancePerRank; // +percent
-} Class;
-
-typedef struct {
-    char *name; // Character name, must be lowercase and underscores only. Also seen as the id by the game
-    char *textColor; // Hex color code for text color
-    char *secondaryColor; // Hex color code for secondary color (used in subtext under rank-up messages)
-    int ranks; // Number of ranks; this is because some characters may have 6 ranks instead of 5
-    Class class;
-} Character;
-
-// Creates a power rank JSON object
-void createEvoJSON(cJSON *jsonObj, Character character, int evoStage);
-
-// Creates a no soulstone power JSON object for the maximum rank
-void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage);
-
-// Creates an origin rank JSON object
-void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage);
-
-// Helper: create a play_sound action object
-cJSON *create_play_sound_action(const char *sound, double volume, double pitch);
-
-// Helper: create an execute_command action object
-cJSON *create_execute_command_action(const char *command);
-
-// Helper: create a change_resource action object
-cJSON *create_change_resource_action(const char *resource, double change, const char *operation);
-
-// Helper: create a spawn_particles action object
-cJSON *create_spawn_particles_action(const char *particle, int count, double speed, cJSON *spread, int duplicate_spread);
-
-// Create directories recursively like `mkdir -p`
-// Platform-agnostic mkdir wrapper: on Windows use _mkdir(path), on POSIX use mkdir(path, mode)
-static int ag_mkdir(const char *path, mode_t mode) {
-#ifdef _WIN32
-    (void)mode;
-    return _mkdir(path);
-#else
-    return mkdir(path, mode);
-#endif
-}
 
 int mkdir_p(const char *path, mode_t mode) {
     if (path == NULL || *path == '\0') {
@@ -155,10 +101,10 @@ cJSON *create_spawn_particles_action(const char *particle, int count, double spe
 
 int main() {
     // Initialize the main 4 classes
-    Class meleeClass = {2, 1, 0.08, 0.0, 0.0, 0.0}; // Melee class
-    Class rangedClass = {1, 1, 0.0, 0.08, 0.0, 0.0}; // Ranged class
-    Class defenseClass = {2, 2, 0.0, 0.0, 0.0, 0.05}; // Defense class
-    Class mageClass = {1, 1, 0.0, 0.0, 0.08, 0.0}; // Mage class
+    CharacterClass meleeClass = {2, 1, 0.08, 0.0, 0.0, 0.0}; // Melee class
+    CharacterClass rangedClass = {1, 1, 0.0, 0.08, 0.0, 0.0}; // Ranged class
+    CharacterClass defenseClass = {2, 2, 0.0, 0.0, 0.0, 0.05}; // Defense class
+    CharacterClass mageClass = {1, 1, 0.0, 0.0, 0.08, 0.0}; // Mage class
 
     // Strings for File paths
     char powerFilepath[100] = "powers/flavors/";
@@ -166,7 +112,7 @@ int main() {
     char rankedFilepath[100] = "origins/ranks/";
 
     // Veriables used to store user selections
-    Class selectedClass;
+    CharacterClass selectedClass;
     Character newCharacter;
     char nameBuffer[50];
     char colorBuffer[20];
@@ -318,7 +264,7 @@ int main() {
             break; // exit the loop if valid input
         }
     }
-    newCharacter.class = selectedClass;
+    newCharacter.charClass = selectedClass;
 
     // Get number of ranks from user
     while (1) {
@@ -338,12 +284,12 @@ int main() {
     printf("Text Color: %s\n", newCharacter.textColor);
     printf("Secondary Text Color: %s\n", newCharacter.secondaryColor);
     printf("Stats per Rank:\n");
-    printf("\tHealth: +%d, \n", newCharacter.class.healthPerRank);
-    printf("\tArmor: +%d, \n", newCharacter.class.armorPerRank);
-    printf("\tMelee Damage: +%.2f%%, \n", newCharacter.class.meleeDamagePerRank * 100);
-    printf("\tRanged Damage: +%.2f%%, \n", newCharacter.class.rangedDamagePerRank * 100);
-    printf("\tGeneral Damage: +%.2f%%, \n", newCharacter.class.generalDamagePerRank * 100);
-    printf("\tDamage Resistance: +%.2f%%\n", newCharacter.class.damageResistancePerRank * 100);
+    printf("\tHealth: +%d, \n", newCharacter.charClass.healthPerRank);
+    printf("\tArmor: +%d, \n", newCharacter.charClass.armorPerRank);
+    printf("\tMelee Damage: +%.2f%%, \n", newCharacter.charClass.meleeDamagePerRank * 100);
+    printf("\tRanged Damage: +%.2f%%, \n", newCharacter.charClass.rangedDamagePerRank * 100);
+    printf("\tGeneral Damage: +%.2f%%, \n", newCharacter.charClass.generalDamagePerRank * 100);
+    printf("\tDamage Resistance: +%.2f%%\n", newCharacter.charClass.damageResistancePerRank * 100);
     printf("Number of Ranks: %d\n", newCharacter.ranks);
 
     // Ask user if the details are correct
