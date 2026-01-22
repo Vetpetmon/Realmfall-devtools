@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
 #include "rfcharacters.h"
+#include "ranked_builder.h"
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 
 int mkdir_p(const char *path, mode_t mode) {
