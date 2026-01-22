@@ -51,6 +51,8 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
 
 // Makes stat increases based on character class and evo stage
 int calculateStatIncrease(int base, int perRank, int evoStage);
+float calculateStatIncreaseFloat(float base, float perRank, int evoStage);
+double calculateStatIncreaseDouble(double base, double perRank, int evoStage);
 
 // Helper: create a play_sound action object
 cJSON *create_play_sound_action(const char *sound, double volume, double pitch);

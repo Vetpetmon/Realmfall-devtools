@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
+#include <math.h>
 #include "rfcharacters.h"
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 
@@ -685,6 +686,12 @@ void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage) {
 int calculateStatIncrease(int base, int perRank, int evoStage) {
     return base + (perRank * evoStage);
 }
+float calculateStatIncreaseFloat(float base, float perRank, int evoStage) {
+    return base + (perRank * evoStage);
+}
+double calculateStatIncreaseDouble(double base, double perRank, int evoStage) {
+    return base + (perRank * evoStage);
+}
 
 void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddStringToObject(jsonObj, "name", "Stat Upgrade");
@@ -721,7 +728,7 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
     if (character.charClass.generalDamagePerRank > 0.0) {
         cJSON *damageModifierObj = cJSON_CreateObject();
         cJSON_AddStringToObject(damageModifierObj, "attribute", "minecraft:generic.attack_damage");
-        double damageIncrease = calculateStatIncrease(0, character.charClass.generalDamagePerRank, evoStage);
+        double damageIncrease = calculateStatIncreaseDouble(0, character.charClass.generalDamagePerRank, evoStage);
         cJSON_AddNumberToObject(damageModifierObj, "value", damageIncrease ); 
         cJSON_AddStringToObject(damageModifierObj, "operation", "multiply_total");
         cJSON_AddItemToArray(modifiersArray, damageModifierObj);
@@ -731,6 +738,8 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
 
     // Attach modifiers array to attributesObj
     cJSON_AddItemToObject(attributesObj, "modifiers", modifiersArray);
+    // add update_health to attributesObj
+    cJSON_AddBoolToObject(attributesObj, "update_health", cJSON_True);
     // Add attributesObj to main jsonObj
     cJSON_AddItemToObject(jsonObj, "attributes", attributesObj);
 
@@ -746,7 +755,7 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
         cJSON_AddItemToObject(meleeModifierObj, "damage_condition", damageConditionObj);
         // modifier object
         cJSON *modifierObj = cJSON_CreateObject();
-        double meleeDamageIncrease = calculateStatIncrease(0, character.charClass.meleeDamagePerRank, evoStage);
+        double meleeDamageIncrease = calculateStatIncreaseDouble(0, character.charClass.meleeDamagePerRank, evoStage);
         cJSON_AddNumberToObject(modifierObj, "value", meleeDamageIncrease);
         cJSON_AddStringToObject(modifierObj, "operation", "multiply_total");
         cJSON_AddItemToObject(meleeModifierObj, "modifier", modifierObj);
@@ -764,16 +773,26 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
         cJSON_AddItemToObject(rangedModifierObj, "damage_condition", damageConditionObj);
         // modifier object
         cJSON *modifierObj = cJSON_CreateObject();
-        double rangedDamageIncrease = calculateStatIncrease(0, character.charClass.rangedDamagePerRank, evoStage);
+        double rangedDamageIncrease = calculateStatIncreaseDouble(0, character.charClass.rangedDamagePerRank, evoStage);
         cJSON_AddNumberToObject(modifierObj, "value", rangedDamageIncrease);
         cJSON_AddStringToObject(modifierObj, "operation", "multiply_total");
         cJSON_AddItemToObject(rangedModifierObj, "modifier", modifierObj);
         // Add to main jsonObj
         cJSON_AddItemToObject(jsonObj, "ranged_damage", rangedModifierObj);
     }
-
-
-    // add update_health boolean
-    cJSON_AddBoolToObject(jsonObj, "update_health", cJSON_True);
-
+    // if damageResistancePerRank > 0 , then add damageResistanceObj
+    if (character.charClass.damageResistancePerRank > 0.0) {
+        cJSON *resistanceModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(resistanceModifierObj, "type", "origins:modify_damage_taken");
+        // modifier object
+        cJSON *modifierObj = cJSON_CreateObject();
+        double damageResistanceIncrease = calculateStatIncreaseDouble(0, character.charClass.damageResistancePerRank, evoStage);
+        // invert value for resistance
+        damageResistanceIncrease = -damageResistanceIncrease;
+        cJSON_AddNumberToObject(modifierObj, "value", damageResistanceIncrease); // formula, if resistance is 0.16 and recieved is 5: recieved * (1 - resistance) = 5 * (1 - 0.16) = 4.2
+        cJSON_AddStringToObject(modifierObj, "operation", "multiply_total_multiplicative");
+        cJSON_AddItemToObject(resistanceModifierObj, "modifier", modifierObj);
+        // Add to main jsonObj
+        cJSON_AddItemToObject(jsonObj, "damage_resistance", resistanceModifierObj);
+    }
 }
