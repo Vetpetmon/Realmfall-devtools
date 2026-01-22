@@ -155,6 +155,12 @@ int main() {
     }
     newCharacter.name = strdup(nameBuffer); // Allocate and copy name
 
+    // Get display name from user
+    printf("Enter a display name for your character (proper capitalization and spaces allowed): ");
+    fgets(nameBuffer, sizeof(nameBuffer), stdin);
+    nameBuffer[strcspn(nameBuffer, "\n")] = 0;
+    newCharacter.displayName = strdup(nameBuffer); // Allocate and copy display name
+
     // Get text color from user
     while (1) {
         printf("Enter a hex color code for your character's text color (e.g., #7fffd4 for a aquamarine color): ");

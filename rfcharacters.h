@@ -30,6 +30,7 @@ typedef struct {
 
 typedef struct {
     char *name; // Character name, must be lowercase and underscores only. Also seen as the id by the game
+    char *displayName; // Display name with proper capitalization and spaces
     char *textColor; // Hex color code for text color
     char *secondaryColor; // Hex color code for secondary color (used in subtext under rank-up messages)
     int ranks; // Number of ranks; this is because some characters may have 6 ranks instead of 5
@@ -44,6 +45,8 @@ void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage);
 
 // Creates an origin rank JSON object
 void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage);
+
+
 
 // Helper: create a play_sound action object
 cJSON *create_play_sound_action(const char *sound, double volume, double pitch);
