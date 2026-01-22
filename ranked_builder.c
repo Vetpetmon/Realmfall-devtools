@@ -730,7 +730,7 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
         cJSON_AddStringToObject(damageModifierObj, "attribute", "minecraft:generic.attack_damage");
         double damageIncrease = calculateStatIncreaseDouble(0, character.charClass.generalDamagePerRank, evoStage);
         cJSON_AddNumberToObject(damageModifierObj, "value", damageIncrease ); 
-        cJSON_AddStringToObject(damageModifierObj, "operation", "multiply_total");
+        cJSON_AddStringToObject(damageModifierObj, "operation", "multiply_total_multiplicative");
         cJSON_AddItemToArray(modifiersArray, damageModifierObj);
     }
     
@@ -757,7 +757,7 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
         cJSON *modifierObj = cJSON_CreateObject();
         double meleeDamageIncrease = calculateStatIncreaseDouble(0, character.charClass.meleeDamagePerRank, evoStage);
         cJSON_AddNumberToObject(modifierObj, "value", meleeDamageIncrease);
-        cJSON_AddStringToObject(modifierObj, "operation", "multiply_total");
+        cJSON_AddStringToObject(modifierObj, "operation", "multiply_total_multiplicative");
         cJSON_AddItemToObject(meleeModifierObj, "modifier", modifierObj);
         // Add to main jsonObj
         cJSON_AddItemToObject(jsonObj, "melee_damage", meleeModifierObj);
@@ -775,7 +775,7 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
         cJSON *modifierObj = cJSON_CreateObject();
         double rangedDamageIncrease = calculateStatIncreaseDouble(0, character.charClass.rangedDamagePerRank, evoStage);
         cJSON_AddNumberToObject(modifierObj, "value", rangedDamageIncrease);
-        cJSON_AddStringToObject(modifierObj, "operation", "multiply_total");
+        cJSON_AddStringToObject(modifierObj, "operation", "multiply_total_multiplicative");
         cJSON_AddItemToObject(rangedModifierObj, "modifier", modifierObj);
         // Add to main jsonObj
         cJSON_AddItemToObject(jsonObj, "ranged_damage", rangedModifierObj);
