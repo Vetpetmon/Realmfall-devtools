@@ -50,7 +50,6 @@ int mkdir_p(const char *path, mode_t mode) {
     return 0;
 }
 
-
 // Helper implementation: create a play_sound action object
 cJSON *create_play_sound_action(const char *sound, double volume, double pitch) {
     cJSON *action = cJSON_CreateObject();
@@ -61,7 +60,6 @@ cJSON *create_play_sound_action(const char *sound, double volume, double pitch) 
     return action;
 }
 
-
 // Helper implementation: create an execute_command action object
 cJSON *create_execute_command_action(const char *command) {
     cJSON *action = cJSON_CreateObject();
@@ -69,7 +67,6 @@ cJSON *create_execute_command_action(const char *command) {
     cJSON_AddStringToObject(action, "command", command);
     return action;
 }
-
 
 // Helper implementation: create a change_resource action object
 cJSON *create_change_resource_action(const char *resource, double change, const char *operation) {
@@ -80,7 +77,6 @@ cJSON *create_change_resource_action(const char *resource, double change, const 
     cJSON_AddStringToObject(action, "operation", operation);
     return action;
 }
-
 
 // Helper implementation: create a spawn_particles action object
 cJSON *create_spawn_particles_action(const char *particle, int count, double speed, cJSON *spread, int duplicate_spread) {
@@ -98,6 +94,7 @@ cJSON *create_spawn_particles_action(const char *particle, int count, double spe
     }
     return action;
 }
+
 
 int main() {
     // Initialize the main 4 classes
@@ -370,6 +367,31 @@ int main() {
             printf("evo.json file created successfully at %s\n", evoFilepath);
             fclose(evoFile);
             cJSON_Delete(evoJSON);
+
+            // now if i is more than 0, create stat upgrade power JSON
+            if (i > 0) {
+                cJSON *statUpgradeJSON = cJSON_CreateObject();
+                createStatUpgradePowerJSON(statUpgradeJSON, newCharacter, i);
+                // cat strings to form filepath
+                char statUpgradeFilepath[200];
+                strcat(strcpy(statUpgradeFilepath, powerFilepath), newCharacter.name);
+                char statUpgradeRankStr[100];
+                sprintf(statUpgradeRankStr, "/%dstar/stat_upgrades.json", i);
+                strcat(statUpgradeFilepath, statUpgradeRankStr);
+                FILE *statUpgradeFile = fopen(statUpgradeFilepath, "w");
+                if (statUpgradeFile == NULL) {
+                    printf("Error creating stat_upgrades.json file for rank %d.\n", i);
+                    cJSON_Delete(statUpgradeJSON);
+                    continue; // skip to next rank
+                }
+                char *prettyStatUpgradeString = cJSON_Print(statUpgradeJSON);
+                fputs(prettyStatUpgradeString, statUpgradeFile);
+                cJSON_free(prettyStatUpgradeString);
+                printf("stat_upgrades.json file created successfully at %s\n", statUpgradeFilepath);
+                fclose(statUpgradeFile);
+                cJSON_Delete(statUpgradeJSON);
+
+            }
         }
 
         // Repeat for createRankOriginJSON
@@ -640,6 +662,12 @@ void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage) {
         sprintf(nextEvoPowerStr, "bisccel:flavors/%s/%dstar/evo", character.name, evoStage);
         cJSON_AddItemToArray(powersArray, cJSON_CreateString(nextEvoPowerStr));
     }
+    // if rank > 0, add stat upgrades power
+    if (evoStage > 0) {
+        char statUpgradePowerStr[300];
+        sprintf(statUpgradePowerStr, "bisccel:flavors/%s/%dstar/stat_upgrades", character.name, evoStage);
+        cJSON_AddItemToArray(powersArray, cJSON_CreateString(statUpgradePowerStr));
+    }
     // Add to main jsonObj
     cJSON_AddItemToObject(jsonObj, "powers", powersArray);
 
@@ -650,5 +678,102 @@ void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage) {
 
     cJSON_AddBoolToObject(jsonObj, "unchoosable", cJSON_True);
     cJSON_AddNumberToObject(jsonObj, "impact", 0);
+
+}
+
+// Makes stat increases based on character class and evo stage
+int calculateStatIncrease(int base, int perRank, int evoStage) {
+    return base + (perRank * evoStage);
+}
+
+void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStage) {
+    cJSON_AddStringToObject(jsonObj, "name", "Stat Upgrade");
+    // TODO: Create description based on stats increased
+    // cJSON_AddStringToObject(jsonObj, "description", "Increases stats based on evolution stage.");
+
+    cJSON_AddStringToObject(jsonObj, "type", "origins:multiple");
+
+    // Create attributes object w/ type "origins:attribute"
+    cJSON *attributesObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(attributesObj, "type", "origins:attribute");
+    // modifiers array ============
+    cJSON *modifiersArray = cJSON_CreateArray();
+
+    // Check if healthPerRank > 0 and add modifier
+    if (character.charClass.healthPerRank > 0) {
+        cJSON *healthModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(healthModifierObj, "attribute", "minecraft:generic.max_health");
+        int healthIncrease = calculateStatIncrease(0, character.charClass.healthPerRank, evoStage);
+        cJSON_AddNumberToObject(healthModifierObj, "value", healthIncrease);
+        cJSON_AddStringToObject(healthModifierObj, "operation", "addition");
+        cJSON_AddItemToArray(modifiersArray, healthModifierObj);
+    }
+    // Check if armorPerRank > 0 and add modifier
+    if (character.charClass.armorPerRank > 0) {
+        cJSON *armorModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(armorModifierObj, "attribute", "minecraft:generic.armor");
+        int armorIncrease = calculateStatIncrease(0, character.charClass.armorPerRank, evoStage);
+        cJSON_AddNumberToObject(armorModifierObj, "value", armorIncrease);
+        cJSON_AddStringToObject(armorModifierObj, "operation", "addition");
+        cJSON_AddItemToArray(modifiersArray, armorModifierObj);
+    }
+    // Check if generalDamagePerRank > 0 and add modifier
+    if (character.charClass.generalDamagePerRank > 0.0) {
+        cJSON *damageModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(damageModifierObj, "attribute", "minecraft:generic.attack_damage");
+        double damageIncrease = calculateStatIncrease(0, character.charClass.generalDamagePerRank, evoStage);
+        cJSON_AddNumberToObject(damageModifierObj, "value", damageIncrease ); 
+        cJSON_AddStringToObject(damageModifierObj, "operation", "multiply_total");
+        cJSON_AddItemToArray(modifiersArray, damageModifierObj);
+    }
+    
+    // modifiers array ============
+
+    // Attach modifiers array to attributesObj
+    cJSON_AddItemToObject(attributesObj, "modifiers", modifiersArray);
+    // Add attributesObj to main jsonObj
+    cJSON_AddItemToObject(jsonObj, "attributes", attributesObj);
+
+
+    // if meleeDamagePerRank > 0 , then add meleeDamageObj
+    if (character.charClass.meleeDamagePerRank > 0.0) {
+        cJSON *meleeModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(meleeModifierObj, "type", "origins:modify_damage_dealt");
+        // damage_condition object containing melee condition
+        cJSON *damageConditionObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(damageConditionObj, "type", "origins:projectile");
+        cJSON_AddBoolToObject(damageConditionObj, "inverted", cJSON_True); // Inverted to mean melee
+        cJSON_AddItemToObject(meleeModifierObj, "damage_condition", damageConditionObj);
+        // modifier object
+        cJSON *modifierObj = cJSON_CreateObject();
+        double meleeDamageIncrease = calculateStatIncrease(0, character.charClass.meleeDamagePerRank, evoStage);
+        cJSON_AddNumberToObject(modifierObj, "value", meleeDamageIncrease);
+        cJSON_AddStringToObject(modifierObj, "operation", "multiply_total");
+        cJSON_AddItemToObject(meleeModifierObj, "modifier", modifierObj);
+        // Add to main jsonObj
+        cJSON_AddItemToObject(jsonObj, "melee_damage", meleeModifierObj);
+    }
+    // Repeat for rangedDamagePerRank, just change condition to non-inverted projectile
+    if (character.charClass.rangedDamagePerRank > 0.0) {
+        cJSON *rangedModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(rangedModifierObj, "type", "origins:modify_damage_dealt");
+        // damage_condition object containing ranged condition
+        cJSON *damageConditionObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(damageConditionObj, "type", "origins:projectile");
+        // No inverted here
+        cJSON_AddItemToObject(rangedModifierObj, "damage_condition", damageConditionObj);
+        // modifier object
+        cJSON *modifierObj = cJSON_CreateObject();
+        double rangedDamageIncrease = calculateStatIncrease(0, character.charClass.rangedDamagePerRank, evoStage);
+        cJSON_AddNumberToObject(modifierObj, "value", rangedDamageIncrease);
+        cJSON_AddStringToObject(modifierObj, "operation", "multiply_total");
+        cJSON_AddItemToObject(rangedModifierObj, "modifier", modifierObj);
+        // Add to main jsonObj
+        cJSON_AddItemToObject(jsonObj, "ranged_damage", rangedModifierObj);
+    }
+
+
+    // add update_health boolean
+    cJSON_AddBoolToObject(jsonObj, "update_health", cJSON_True);
 
 }

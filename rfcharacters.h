@@ -46,7 +46,11 @@ void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage);
 // Creates an origin rank JSON object
 void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage);
 
+// Creates a power that holds stat upgrades based on evo stage and character class
+void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStage);
 
+// Makes stat increases based on character class and evo stage
+int calculateStatIncrease(int base, int perRank, int evoStage);
 
 // Helper: create a play_sound action object
 cJSON *create_play_sound_action(const char *sound, double volume, double pitch);
