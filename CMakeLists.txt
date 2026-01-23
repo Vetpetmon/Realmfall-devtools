@@ -15,8 +15,12 @@ add_library(cjson STATIC
 
 target_include_directories(cjson PUBLIC ${CMAKE_SOURCE_DIR}/cjson)
 
-# Main executable
-add_executable(ranked_builder ranked_builder.c)
+# Add ranked_builder 
+add_library(ranked_builder STATIC ranked_builder.c)
+target_include_directories(ranked_builder PUBLIC ${CMAKE_SOURCE_DIR})
 
-target_link_libraries(ranked_builder PRIVATE cjson)
+# Main executable
+add_executable(character_maker character_builder.c)
+
+target_link_libraries(character_maker PRIVATE cjson ranked_builder)
 
