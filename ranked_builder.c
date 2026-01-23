@@ -97,6 +97,8 @@ cJSON *create_spawn_particles_action(const char *particle, int count, double spe
 }
 
 
+// If built standalone, include a main() that collects input and calls generate_character_files.
+#ifdef RANKED_BUILDER_STANDALONE
 int main() {
     // Initialize the main 4 classes
     CharacterClass meleeClass = {2, 1, 0.08, 0.0, 0.0, 0.0}; // Melee class
@@ -311,15 +313,35 @@ int main() {
         return 0; // Still a normal exit.
     }
 
+    // Delegate the filesystem & JSON generation to a reusable function so other programs
+    // (like character_builder) can call it to generate files for multiple characters.
+    if (generate_character_files(newCharacter) != 0) {
+        fprintf(stderr, "Error generating character files for %s\n", newCharacter.name);
+    }
+
+    return 0; // normal exit
+}
+#endif // RANKED_BUILDER_STANDALONE
+
+// Generate all files and directories for a Character. Returns 0 on success, non-zero on error.
+int generate_character_files(Character newCharacter) {
+    // Strings for File paths
+    char powerFilepath[100] = "powers/flavors/";
+    char originFilepath[100] = "origins/";
+    char rankedFilepath[100] = "origins/ranks/";
+
     // Ensure base directories exist (create parents as needed)
     if (mkdir_p(powerFilepath, 0755) != 0) {
         perror("Error creating power directory");
+        return -1;
     }
     if (mkdir_p(originFilepath, 0755) != 0) {
         perror("Error creating origins directory");
+        return -1;
     }
     if (mkdir_p(rankedFilepath, 0755) != 0) {
         perror("Error creating ranks directory");
+        return -1;
     }
 
     // Create character-specific directories under powers/flavors
@@ -328,14 +350,16 @@ int main() {
     strcat(characterDir, newCharacter.name);
     if (mkdir_p(characterDir, 0755) != 0) {
         perror("Error creating character directory");
+        return -1;
     }
     char evo0Dir[256];
     strcpy(evo0Dir, characterDir);
     strcat(evo0Dir, "/0star");
     if (mkdir_p(evo0Dir, 0755) != 0) {
         perror("Error creating evo0 directory");
+        return -1;
     }
-    
+
     // Create other rank directories as needed based on newCharacter.ranks
     for (int i = 0; i < newCharacter.ranks+1; i++) {
         if (i < newCharacter.ranks) {
@@ -360,9 +384,8 @@ int main() {
                 cJSON_Delete(evoJSON);
                 continue; // skip to next rank
             }
-            // We want to prettify the JSON output for easier reading
+            // Pretty output
             char *prettyEvoString = cJSON_Print(evoJSON);
-            //printf("%s\n", prettyEvoString);
             fputs(prettyEvoString, evoFile);
             cJSON_free(prettyEvoString);
             printf("evo.json file created successfully at %s\n", evoFilepath);
@@ -452,9 +475,8 @@ int main() {
     }
     cJSON_Delete(noSoulstoneJSON);
 
-    printf("Character creation completed successfully!\n");
-
-    return 0; // normal exit
+    printf("Character creation completed successfully for %s!\n", newCharacter.name);
+    return 0;
 }
 
 void createNoSoulstoneJSON(cJSON *jsonObj, Character character, int evoStage) {

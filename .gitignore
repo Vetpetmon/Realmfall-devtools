@@ -3,3 +3,6 @@ build
 output
 .exe
 output/ranked_builder.exe
+origins
+powers
+test_gen.c

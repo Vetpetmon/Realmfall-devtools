@@ -1,3 +1,7 @@
+// Header guard
+#ifndef RFCHARACTERS_H
+#define RFCHARACTERS_H
+
 #include "cjson/cJSON.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,4 +43,6 @@ typedef struct {
     int ranks; // Number of ranks; this is because some characters may have 6 ranks instead of 5
     CharacterClass charClass;
 } Character;
+
+#endif // RFCHARACTERS_H
 

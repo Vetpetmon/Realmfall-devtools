@@ -1,4 +1,5 @@
 #include "cjson/cJSON.h"
+#include "rfcharacters.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -36,3 +37,6 @@ cJSON *create_change_resource_action(const char *resource, double change, const 
 
 // Helper: create a spawn_particles action object
 cJSON *create_spawn_particles_action(const char *particle, int count, double speed, cJSON *spread, int duplicate_spread);
+
+// Generate all files and directories for a Character (used by character_builder)
+int generate_character_files(Character newCharacter);
