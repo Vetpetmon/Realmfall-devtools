@@ -96,240 +96,6 @@ cJSON *create_spawn_particles_action(const char *particle, int count, double spe
     return action;
 }
 
-
-// If built standalone, include a main() that collects input and calls generate_character_files.
-#ifdef RANKED_BUILDER_STANDALONE
-int main() {
-    // Initialize the main 4 classes
-    CharacterClass meleeClass = {2, 1, 0.08, 0.0, 0.0, 0.0}; // Melee class
-    CharacterClass rangedClass = {1, 1, 0.0, 0.08, 0.0, 0.0}; // Ranged class
-    CharacterClass defenseClass = {2, 2, 0.0, 0.0, 0.0, 0.05}; // Defense class
-    CharacterClass mageClass = {1, 1, 0.0, 0.0, 0.08, 0.0}; // Mage class
-
-    // Strings for File paths
-    char powerFilepath[100] = "powers/flavors/";
-    char originFilepath[100] = "origins/";
-    char rankedFilepath[100] = "origins/ranks/";
-
-    // Veriables used to store user selections
-    CharacterClass selectedClass;
-    Character newCharacter;
-    char nameBuffer[50];
-    char colorBuffer[20];
-    // Get character name from user with verification
-    while(1) {
-        printf("Enter a name for your character (max 49 characters): ");
-        fgets(nameBuffer, sizeof(nameBuffer), stdin);
-        // Remove newline character if present
-        nameBuffer[strcspn(nameBuffer, "\n")] = 0;
-        if (strlen(nameBuffer) == 0) {
-            printf("Name cannot be empty. Please try again.\n");
-        } else {
-
-            // Check if all characters are:
-            // letters or underscores
-            // underscores are not at start or end
-            // if a letter, must be undercased
-
-            // This is because for datapacks, names must be lowercase and underscores only
-            // We do not allow numbers according to naming conventions
-            int valid = 1;
-            int len = strlen(nameBuffer);
-            for (int i = 0; i < len; i++) {
-                char c = nameBuffer[i];
-                if (!((c >= 'a' && c <= 'z') || c == '_')) {
-                    valid = 0;
-                    break;
-                }
-                if (c == '_' && (i == 0 || i == len - 1)) {
-                    valid = 0;
-                    break;
-                }
-            }
-            if (!valid) {
-                printf("Invalid name. Use only lowercase letters and underscores (not at start or end).\n");
-                continue; // prompt again
-            }
-            break; // exit the loop if valid input
-        }
-    }
-    newCharacter.name = strdup(nameBuffer); // Allocate and copy name
-
-    // Get display name from user
-    printf("Enter a display name for your character (proper capitalization and spaces allowed): ");
-    fgets(nameBuffer, sizeof(nameBuffer), stdin);
-    nameBuffer[strcspn(nameBuffer, "\n")] = 0;
-    newCharacter.displayName = strdup(nameBuffer); // Allocate and copy display name
-
-    // Get text color from user
-    while (1) {
-        printf("Enter a hex color code for your character's text color (e.g., #7fffd4 for a aquamarine color): ");
-        fgets(colorBuffer, sizeof(colorBuffer), stdin);
-        // Remove newline character if present
-        colorBuffer[strcspn(colorBuffer, "\n")] = 0;
-        // Validate hex color code
-        // Check first character is '#' and give feedback if not
-        if (colorBuffer[0] != '#') {
-            printf("Invalid color code format: Missing '#' at the beginning. Please try again.\n");
-            continue; // prompt again
-        }
-        // Check length and characters
-        if (strlen(colorBuffer) != 7) {
-            // Uniquely warn about length being 9 (alpha channel included)
-            if (strlen(colorBuffer) == 9) {
-                printf("Invalid color code format: It seems you've included an alpha channel. Please provide a 6-digit hex code prefixed with '#'.\n");
-            } // Because text colors do not have an alpha channel
-            else {
-                printf("Invalid color code format: Incorrect length. Please ensure it's 7 characters long, including '#'.\n");
-            }
-            continue; // prompt again
-        }
-        int valid = 1;
-        for (int i = 1; i < 7; i++) {
-            char c = colorBuffer[i];
-            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
-                valid = 0;
-                break;
-            }
-        }
-        if (!valid) {
-            printf("Invalid color code format. Please try again.\n");
-            continue; // prompt again
-        }
-        break; // exit the loop if valid input
-    }
-    newCharacter.textColor = strdup(colorBuffer); // Allocate and copy text color
-
-    // Secondary color
-    while (1) {
-        printf("Enter a hex color code for your character's secondary color (e.g., #7fffd4 for a aquamarine color): ");
-        fgets(colorBuffer, sizeof(colorBuffer), stdin);
-        // Remove newline character if present
-        colorBuffer[strcspn(colorBuffer, "\n")] = 0;
-        // Validate hex color code
-        // Check first character is '#' and give feedback if not
-        if (colorBuffer[0] != '#') {
-            printf("Invalid color code format: Missing '#' at the beginning. Please try again.\n");
-            continue; // prompt again
-        }
-        // Check length and characters
-        if (strlen(colorBuffer) != 7) {
-            // Uniquely warn about length being 9 (alpha channel included)
-            if (strlen(colorBuffer) == 9) {
-                printf("Invalid color code format: It seems you've included an alpha channel. Please provide a 6-digit hex code prefixed with '#'.\n");
-            } // Because text colors do not have an alpha channel
-            else {
-                printf("Invalid color code format: Incorrect length. Please ensure it's 7 characters long, including '#'.\n");
-            }
-            continue; // prompt again
-        }
-        int valid = 1;
-        for (int i = 1; i < 7; i++) {
-            char c = colorBuffer[i];
-            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
-                valid = 0;
-                break;
-            }
-        }
-        if (!valid) {
-            printf("Invalid color code format. Please try again.\n");
-            continue; // prompt again
-        }
-        break; // exit the loop if valid input
-    }
-    newCharacter.secondaryColor = strdup(colorBuffer); // Allocate and copy secondary color
-
-
-    // for-loop to retry if invalid input
-    while(1) {
-        // Give options to user to select class
-        printf("Select a class for your character:\n");
-        printf("1. Melee\n");
-        printf("2. Ranged\n");
-        printf("3. Defense\n");
-        printf("4. Mage\n");
-        int classChoice;
-        scanf("%d", &classChoice);
-        switch (classChoice) {
-            case 1:
-                selectedClass = meleeClass;
-                break;
-            case 2:
-                selectedClass = rangedClass;
-                break;
-            case 3:
-                selectedClass = defenseClass;
-                break;
-            case 4:
-                selectedClass = mageClass;
-                break;
-            default:
-                printf("Invalid choice.\n");
-        }
-        if (classChoice >= 1 && classChoice <= 4) {
-            break; // exit the loop if valid input
-        }
-    }
-    newCharacter.charClass = selectedClass;
-
-    // Get number of ranks from user
-    while (1) {
-        printf("Enter the number of ranks for your character (5 or 6): ");
-        int ranks;
-        scanf("%d", &ranks);
-        if (ranks == 5 || ranks == 6) {
-            newCharacter.ranks = ranks;
-            break; // exit the loop if valid input
-        } else {
-            printf("Invalid number of ranks. Please enter 5 or 6.\n");
-        }
-    }
-    // Print character summary
-    printf("\nCharacter Summary:\n");
-    printf("Name: %s\n", newCharacter.name);
-    printf("Text Color: %s\n", newCharacter.textColor);
-    printf("Secondary Text Color: %s\n", newCharacter.secondaryColor);
-    printf("Stats per Rank:\n");
-    printf("\tHealth: +%d, \n", newCharacter.charClass.healthPerRank);
-    printf("\tArmor: +%d, \n", newCharacter.charClass.armorPerRank);
-    printf("\tMelee Damage: +%.2f%%, \n", newCharacter.charClass.meleeDamagePerRank * 100);
-    printf("\tRanged Damage: +%.2f%%, \n", newCharacter.charClass.rangedDamagePerRank * 100);
-    printf("\tGeneral Damage: +%.2f%%, \n", newCharacter.charClass.generalDamagePerRank * 100);
-    printf("\tDamage Resistance: +%.2f%%\n", newCharacter.charClass.damageResistancePerRank * 100);
-    printf("Number of Ranks: %d\n", newCharacter.ranks);
-
-    // Ask user if the details are correct
-    char confirm;
-    printf("Are these details correct? (y/n): ");
-    scanf(" %c", &confirm);
-    // Convert to lowercase
-    confirm = tolower(confirm);
-    if (confirm != 'y') {
-        printf("Character creation cancelled. Please run the program again to create a new character.\n");
-        // Free allocated memory
-        free(newCharacter.name);
-        free(newCharacter.displayName);
-        free(newCharacter.textColor);
-        free(newCharacter.secondaryColor);
-        return 0; // Still a normal exit.
-    }
-
-    // Delegate the filesystem & JSON generation to a reusable function so other programs
-    // (like character_builder) can call it to generate files for multiple characters.
-    if (generate_character_files(newCharacter) != 0) {
-        fprintf(stderr, "Error generating character files for %s\n", newCharacter.name);
-    }
-
-    // Free allocated character strings
-    free(newCharacter.name);
-    free(newCharacter.displayName);
-    free(newCharacter.textColor);
-    free(newCharacter.secondaryColor);
-
-    return 0; // normal exit
-}
-#endif // RANKED_BUILDER_STANDALONE
-
 // Generate all files and directories for a Character. Returns 0 on success, non-zero on error.
 int generate_character_files(Character newCharacter) {
     // Strings for File paths
@@ -482,6 +248,45 @@ int generate_character_files(Character newCharacter) {
     }
     cJSON_Delete(noSoulstoneJSON);
 
+    // createCharacterOriginJSON
+    cJSON *characterOriginJSON = cJSON_CreateObject();
+    createCharacterOriginJSON(characterOriginJSON, newCharacter);
+    // cat strings to form filepath
+    char characterOriginFilepath[200];
+    strcat(strcpy(characterOriginFilepath, originFilepath), newCharacter.name);
+    strcat(characterOriginFilepath, ".json");
+    FILE *characterOriginFile = fopen(characterOriginFilepath, "w");
+    if (characterOriginFile == NULL) {
+        printf("Error creating character origin JSON file.\n");
+        cJSON_Delete(characterOriginJSON);
+    } else {
+        char *prettyCharacterOriginString = cJSON_Print(characterOriginJSON);
+        fputs(prettyCharacterOriginString, characterOriginFile);
+        cJSON_free(prettyCharacterOriginString);
+        printf("Character origin JSON file created successfully at %s\n", characterOriginFilepath);
+        fclose(characterOriginFile);
+    }
+    cJSON_Delete(characterOriginJSON);
+
+    // createDefPowerJSON
+    cJSON *defPowerJSON = cJSON_CreateObject();
+    createDefPowerJSON(defPowerJSON, newCharacter);
+    // cat strings to form filepath
+    char defPowerFilepath[200];
+    strcat(strcpy(defPowerFilepath, powerFilepath), newCharacter.name);
+    strcat(defPowerFilepath, "/def.json");
+    FILE *defPowerFile = fopen(defPowerFilepath, "w");
+    if (defPowerFile == NULL) {
+        printf("Error creating def power JSON file.\n");
+        cJSON_Delete(defPowerJSON);
+    } else {
+        char *prettyDefPowerString = cJSON_Print(defPowerJSON);
+        fputs(prettyDefPowerString, defPowerFile);
+        cJSON_free(prettyDefPowerString);
+        printf("Def power JSON file created successfully at %s\n", defPowerFilepath);
+        fclose(defPowerFile);
+    }
+    cJSON_Delete(defPowerJSON);
 
     printf("Character creation completed successfully for %s!\n", newCharacter.name);
     return 0;
@@ -901,5 +706,45 @@ char* createStatUpgradeDescription(Character character, int evoStage) {
     }
 
     return description;
+
+}
+
+void createCharacterOriginJSON(cJSON *jsonObj, Character character) {
+    cJSON_AddStringToObject(jsonObj, "name", character.displayName);
+    cJSON_AddStringToObject(jsonObj, "description", "REPLACEME.");
+    // powers array
+    cJSON *powersArray = cJSON_CreateArray();
+    // Will need to assemble power string (resource location) based on character name
+    char defPower[200];
+    sprintf(defPower, "bisccel:ranks/%s/def", character.name); // This sets stars to 0, sets rank scoreboards, etc.
+    cJSON_AddItemToArray(powersArray, cJSON_CreateString(defPower));
+    // Add to main jsonObj
+    cJSON_AddItemToObject(jsonObj, "powers", powersArray);
+    // Make unchoosable
+    cJSON_AddBoolToObject(jsonObj, "unchoosable", cJSON_True);
+    cJSON_AddNumberToObject(jsonObj, "impact", 0);
+}
+
+void createDefPowerJSON(cJSON *jsonObj, Character character) {
+    cJSON_AddStringToObject(jsonObj, "name", "0 Stars");
+    cJSON_AddStringToObject(jsonObj, "description", "Automatically sets this origin's rank to 0 stars when switching to this origin.");
+    cJSON_AddBoolToObject(jsonObj, "hidden", cJSON_True);
+    cJSON_AddStringToObject(jsonObj, "type", "origins:action_on_callback");
+    cJSON *entityActionChosenObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(entityActionChosenObj, "type", "origins:and");
+    // actions array
+    cJSON *actionsArray = cJSON_CreateArray();
+    // First action: set origin rank to 0star
+    char commandStr[300];
+    sprintf(commandStr, "origin set @s bisccel:rank bisccel:ranks/%s/0star", character.name);
+    cJSON *action1 = create_execute_command_action(commandStr);
+    cJSON_AddItemToArray(actionsArray, action1);
+    // Second action: set ability_num scoreboard to 1
+    cJSON *action2 = create_execute_command_action("scoreboard players set @s bisccel.ability_num 1");
+    cJSON_AddItemToArray(actionsArray, action2);
+    // Attach actions array to entityActionChosenObj
+    cJSON_AddItemToObject(entityActionChosenObj, "actions", actionsArray);
+    cJSON_AddItemToObject(jsonObj, "entity_action_chosen", entityActionChosenObj);
+    cJSON_AddBoolToObject(jsonObj, "execute_chosen_when_orb", cJSON_True);
 
 }
