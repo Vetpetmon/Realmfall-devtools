@@ -1,1 +1,1 @@
-C:\TDM-GCC-64\bin\gcc.EXE -Wall -Wextra -g3 ranked_builder.c .\cjson\cJSON.c .\cjson\cJSON_Utils.c -Ic:\cjson -o .\output\ranked_builder.exe
+C:\TDM-GCC-64\bin\gcc.EXE -Wall -Wextra -g3 -g ranked_builder.c .\cjson\cJSON.c .\cjson\cJSON_Utils.c character_builder.c -I. -Ic:\cjson -o .\output\ranked_builder.exe

@@ -210,10 +210,15 @@ Character get_user_input_character() {
     // Summary and confirmation
     printf("\nCharacter Summary:\n");
     printf("Name: %s\n", newCharacter.name);
-    printf("Display Name: %s\n", newCharacter.displayName);
-    printf("Text Color: %s\n", newCharacter.textColor);
-    printf("Secondary Color: %s\n", newCharacter.secondaryColor);
+    printf("Display Name: %s\nText Color: %s\nSecondary Color: %s\n", newCharacter.displayName, newCharacter.textColor, newCharacter.secondaryColor);
     printf("Number of Ranks: %d\n", newCharacter.ranks);
+    printf("Class Stats per Rank:\n");
+    printf("\tHealth: +%d\n", newCharacter.charClass.healthPerRank);
+    printf("\tArmor: +%d\n", newCharacter.charClass.armorPerRank);
+    printf("\tMelee Damage: +%.2f%%\n", newCharacter.charClass.meleeDamagePerRank * 100);
+    printf("\tRanged Damage: +%.2f%%\n", newCharacter.charClass.rangedDamagePerRank * 100);
+    printf("\tGeneral Damage: +%.2f%%\n", newCharacter.charClass.generalDamagePerRank * 100);
+    printf("\tDamage Resistance: +%.2f%%\n", newCharacter.charClass.damageResistancePerRank * 100);
     printf("Are these details correct? (y/n): ");
     char confirm = 'n';
     if (scanf(" %c", &confirm) == 1) { confirm = tolower(confirm); }
