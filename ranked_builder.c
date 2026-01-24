@@ -398,33 +398,33 @@ int generate_character_files(Character newCharacter) {
             printf("evo.json file created successfully at %s\n", evoFilepath);
             fclose(evoFile);
             cJSON_Delete(evoJSON);
-
-            // now if i is more than 0, create stat upgrade power JSON
-            if (i > 0) {
-                cJSON *statUpgradeJSON = cJSON_CreateObject();
-                createStatUpgradePowerJSON(statUpgradeJSON, newCharacter, i);
-                // cat strings to form filepath
-                char statUpgradeFilepath[200];
-                strcat(strcpy(statUpgradeFilepath, powerFilepath), newCharacter.name);
-                char statUpgradeRankStr[100];
-                sprintf(statUpgradeRankStr, "/%dstar/stat_upgrades.json", i);
-                strcat(statUpgradeFilepath, statUpgradeRankStr);
-                FILE *statUpgradeFile = fopen(statUpgradeFilepath, "w");
-                if (statUpgradeFile == NULL) {
-                    printf("Error creating stat_upgrades.json file for rank %d.\n", i);
-                    cJSON_Delete(statUpgradeJSON);
-                    continue; // skip to next rank
-                }
-                char *prettyStatUpgradeString = cJSON_Print(statUpgradeJSON);
-                fputs(prettyStatUpgradeString, statUpgradeFile);
-                cJSON_free(prettyStatUpgradeString);
-                printf("stat_upgrades.json file created successfully at %s\n", statUpgradeFilepath);
-                fclose(statUpgradeFile);
-                cJSON_Delete(statUpgradeJSON);
-
-            }
         }
 
+        // now if i is more than 0, create stat upgrade power JSON
+        if (i > 0) {
+            cJSON *statUpgradeJSON = cJSON_CreateObject();
+            createStatUpgradePowerJSON(statUpgradeJSON, newCharacter, i);
+            // cat strings to form filepath
+            char statUpgradeFilepath[200];
+            strcat(strcpy(statUpgradeFilepath, powerFilepath), newCharacter.name);
+            char statUpgradeRankStr[100];
+            sprintf(statUpgradeRankStr, "/%dstar/stat_upgrades.json", i);
+            strcat(statUpgradeFilepath, statUpgradeRankStr);
+            FILE *statUpgradeFile = fopen(statUpgradeFilepath, "w");
+            if (statUpgradeFile == NULL) {
+                printf("Error creating stat_upgrades.json file for rank %d.\n", i);
+                cJSON_Delete(statUpgradeJSON);
+                continue; // skip to next rank
+            }
+            char *prettyStatUpgradeString = cJSON_Print(statUpgradeJSON);
+            fputs(prettyStatUpgradeString, statUpgradeFile);
+            cJSON_free(prettyStatUpgradeString);
+            printf("stat_upgrades.json file created successfully at %s\n", statUpgradeFilepath);
+            fclose(statUpgradeFile);
+            cJSON_Delete(statUpgradeJSON);
+
+        }
+        
         // Repeat for createRankOriginJSON
         char originRankDir[256];
         sprintf(originRankDir, "%s%s/%dstar", rankedFilepath, newCharacter.name, i);
