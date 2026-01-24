@@ -21,6 +21,9 @@ void createRankOriginJSON(cJSON *jsonObj, Character character, int evoStage);
 // Creates a power that holds stat upgrades based on evo stage and character class
 void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStage);
 
+// Creates stat increase power description based on character class and evo stage
+char *createStatUpgradeDescription(Character character, int evoStage);
+
 // Makes stat increases based on character class and evo stage
 int calculateStatIncrease(int base, int perRank, int evoStage);
 float calculateStatIncreaseFloat(float base, float perRank, int evoStage);

@@ -308,6 +308,7 @@ int main() {
         printf("Character creation cancelled. Please run the program again to create a new character.\n");
         // Free allocated memory
         free(newCharacter.name);
+        free(newCharacter.displayName);
         free(newCharacter.textColor);
         free(newCharacter.secondaryColor);
         return 0; // Still a normal exit.
@@ -318,6 +319,12 @@ int main() {
     if (generate_character_files(newCharacter) != 0) {
         fprintf(stderr, "Error generating character files for %s\n", newCharacter.name);
     }
+
+    // Free allocated character strings
+    free(newCharacter.name);
+    free(newCharacter.displayName);
+    free(newCharacter.textColor);
+    free(newCharacter.secondaryColor);
 
     return 0; // normal exit
 }
@@ -475,6 +482,7 @@ int generate_character_files(Character newCharacter) {
     }
     cJSON_Delete(noSoulstoneJSON);
 
+
     printf("Character creation completed successfully for %s!\n", newCharacter.name);
     return 0;
 }
@@ -551,7 +559,6 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddItemToObject(hudRenderObj, "condition", hudConditionsObj);
     // Now we nest
     cJSON_AddItemToObject(soulcountObj, "hud_render", hudRenderObj);
-    cJSON_AddItemToObject(jsonObj, "soulcount", soulcountObj);
 
     // max_action
     cJSON *maxActionObj = cJSON_CreateObject();
@@ -633,7 +640,7 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddStringToObject(entityActionChosenObj, "type", "origins:and");
     // Actions array
     cJSON *resetActionsArray = cJSON_CreateArray();
-    cJSON *resetAction1 = cJSON_CreateObject();
+    
     // first action: change_resource (reset)
     char resetResourceStr[200];
     sprintf(resetResourceStr, "bisccel:flavors/%s/%dstar/evo_soulcount", character.name, evoStage);
@@ -717,8 +724,10 @@ double calculateStatIncreaseDouble(double base, double perRank, int evoStage) {
 
 void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON_AddStringToObject(jsonObj, "name", "Stat Upgrade");
-    // TODO: Create description based on stats increased
-    // cJSON_AddStringToObject(jsonObj, "description", "Increases stats based on evolution stage.");
+
+    char *description = createStatUpgradeDescription(character, evoStage);
+    cJSON_AddStringToObject(jsonObj, "description", description);
+    free(description);
 
     cJSON_AddStringToObject(jsonObj, "type", "origins:multiple");
 
@@ -817,4 +826,80 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
         // Add to main jsonObj
         cJSON_AddItemToObject(jsonObj, "damage_resistance", resistanceModifierObj);
     }
+}
+
+// Create description string for stat upgrade power
+char* createStatUpgradeDescription(Character character, int evoStage) {
+    // Allocate a buffer for the description (512 chars should be way more than enough)
+    char *description = (char *)malloc(512 * sizeof(char));
+    if (description == NULL) {
+        fprintf(stderr, "Memory allocation failed for stat upgrade description.\n");
+        exit(1);
+    }
+    strcpy(description, "Increases stats: ");
+    int first = 1; // flag to track if it's the first stat added
+    // Check each stat and append to description if > 0
+    if (character.charClass.healthPerRank > 0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        int healthIncrease = calculateStatIncrease(0, character.charClass.healthPerRank, evoStage);
+        char temp[100];
+        sprintf(temp, "Health +%d", healthIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.armorPerRank > 0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        int armorIncrease = calculateStatIncrease(0, character.charClass.armorPerRank, evoStage);
+        char temp[100];
+        sprintf(temp, "Armor +%d", armorIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.meleeDamagePerRank > 0.0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        double meleeIncrease = calculateStatIncreaseDouble(0, character.charClass.meleeDamagePerRank, evoStage) * 100;
+        char temp[100];
+        sprintf(temp, "Melee Damage +%.2f%%", meleeIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.rangedDamagePerRank > 0.0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        double rangedIncrease = calculateStatIncreaseDouble(0, character.charClass.rangedDamagePerRank, evoStage) * 100;
+        char temp[100];
+        sprintf(temp, "Ranged Damage +%.2f%%", rangedIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.generalDamagePerRank > 0.0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        double generalIncrease = calculateStatIncreaseDouble(0, character.charClass.generalDamagePerRank, evoStage) * 100;
+        char temp[100];
+        sprintf(temp, "General Damage +%.2f%%", generalIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.damageResistancePerRank > 0.0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        double resistanceIncrease = calculateStatIncreaseDouble(0, character.charClass.damageResistancePerRank, evoStage) * 100;
+        char temp[100];
+        sprintf(temp, "Damage Resistance +%.2f%%", resistanceIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+
+    return description;
+
 }
