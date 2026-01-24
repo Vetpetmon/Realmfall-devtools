@@ -424,10 +424,10 @@ int generate_character_files(Character newCharacter) {
             cJSON_Delete(statUpgradeJSON);
 
         }
-        
+
         // Repeat for createRankOriginJSON
         char originRankDir[256];
-        sprintf(originRankDir, "%s%s/%dstar", rankedFilepath, newCharacter.name, i);
+        sprintf(originRankDir, "%s%s", rankedFilepath, newCharacter.name);
         if (mkdir_p(originRankDir, 0755) != 0) {
             perror("Error creating origin rank directory");
         }
