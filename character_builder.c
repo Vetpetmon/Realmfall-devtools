@@ -19,7 +19,7 @@ Character get_user_input_character();
 // Add a Character to the characters array
 Character **add_character(Character **characters, size_t *character_count, Character new_character);
 
-// Clear screen function (platform dependent)
+// Clear screen function (platform-independent)
 void clear_screen();
 
 // Clear screen implementation
