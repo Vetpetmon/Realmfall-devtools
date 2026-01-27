@@ -289,6 +289,10 @@ int generate_character_files(Character newCharacter) {
     cJSON_Delete(defPowerJSON);
 
     printf("Character creation completed successfully for %s!\n", newCharacter.name);
+
+    // Wait for user to press Enter before clearing screen
+    printf("Press Enter to continue...");
+    scanf("%*c");
     return 0;
 }
 
@@ -569,6 +573,33 @@ void createStatUpgradePowerJSON(cJSON *jsonObj, Character character, int evoStag
         cJSON_AddStringToObject(damageModifierObj, "operation", "multiply_total_multiplicative");
         cJSON_AddItemToArray(modifiersArray, damageModifierObj);
     }
+    // Same with luckPerRank
+    if (character.charClass.luckPerRank > 0.0) {
+        cJSON *luckModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(luckModifierObj, "attribute", "minecraft:generic.luck");
+        double luckIncrease = calculateStatIncreaseDouble(0, character.charClass.luckPerRank, evoStage);
+        cJSON_AddNumberToObject(luckModifierObj, "value", luckIncrease);
+        cJSON_AddStringToObject(luckModifierObj, "operation", "addition");
+        cJSON_AddItemToArray(modifiersArray, luckModifierObj);
+    }
+    // Same with primaryAbilitySkillPerRank
+    if (character.charClass.primaryAbilitySkillPerRank > 0.0) {
+        cJSON *abilityModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(abilityModifierObj, "attribute", "bisccel:primary_skill_strength");
+        double abilityIncrease = calculateStatIncrease(0, character.charClass.primaryAbilitySkillPerRank, evoStage);
+        cJSON_AddNumberToObject(abilityModifierObj, "value", abilityIncrease);
+        cJSON_AddStringToObject(abilityModifierObj, "operation", "addition");
+        cJSON_AddItemToArray(modifiersArray, abilityModifierObj);
+    }
+    // secondaryAbilitySkillPerRank
+    if (character.charClass.secondaryAbilitySkillPerRank > 0.0) {
+        cJSON *abilityTwoModifierObj = cJSON_CreateObject();
+        cJSON_AddStringToObject(abilityTwoModifierObj, "attribute", "bisccel:secondary_skill_strength");
+        double abilityIncrease = calculateStatIncrease(0, character.charClass.secondaryAbilitySkillPerRank, evoStage);
+        cJSON_AddNumberToObject(abilityTwoModifierObj, "value", abilityIncrease);
+        cJSON_AddStringToObject(abilityTwoModifierObj, "operation", "addition");
+        cJSON_AddItemToArray(modifiersArray, abilityTwoModifierObj);
+    }
     
     // modifiers array ============
 
@@ -701,6 +732,36 @@ char* createStatUpgradeDescription(Character character, int evoStage) {
         double resistanceIncrease = calculateStatIncreaseDouble(0, character.charClass.damageResistancePerRank, evoStage) * 100;
         char temp[100];
         sprintf(temp, "Damage Resistance +%.2f%%", resistanceIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.luckPerRank > 0.0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        double luckIncrease = calculateStatIncreaseDouble(0, character.charClass.luckPerRank, evoStage) * 100;
+        char temp[100];
+        sprintf(temp, "Luck +%.2f%%", luckIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.primaryAbilitySkillPerRank > 0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        int abilityIncrease = calculateStatIncrease(0, character.charClass.primaryAbilitySkillPerRank, evoStage);
+        char temp[100];
+        sprintf(temp, "Primary Ability Skill +%d", abilityIncrease);
+        strcat(description, temp);
+        first = 0;
+    }
+    if (character.charClass.secondaryAbilitySkillPerRank > 0) {
+        if (!first) {
+            strcat(description, ", ");
+        }
+        int abilityIncrease = calculateStatIncrease(0, character.charClass.secondaryAbilitySkillPerRank, evoStage);
+        char temp[100];
+        sprintf(temp, "Secondary Ability Skill +%d", abilityIncrease);
         strcat(description, temp);
         first = 0;
     }

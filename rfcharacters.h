@@ -33,6 +33,9 @@ typedef struct {
     double rangedDamagePerRank; // +percent
     double generalDamagePerRank; // +percent
     double damageResistancePerRank; // +percent
+    double luckPerRank; // +percent
+    int primaryAbilitySkillPerRank;
+    int secondaryAbilitySkillPerRank;
 } CharacterClass;
 
 typedef struct {

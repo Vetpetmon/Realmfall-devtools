@@ -10,14 +10,30 @@
 enum MenuChoice {
     CREATE_CHARACTER = 1,
     GENERATE_FILES = 2,
-    EXIT = 3
+    CHECK_CLASS_STATS = 3,
+    EXIT = 4
 };
+
+
+// Predefined CharacterClasses
+CharacterClass meleeClass = {2, 1, 0.08, 0.0, 0.0, 0.0, 0.0, 0, 0};    // High health and melee damage
+CharacterClass rangedClass = {1, 1, 0.0, 0.08, 0.0, 0.0, 0.0, 0, 0};   // Balanced ranged damager
+CharacterClass defenseClass = {2, 2, 0.0, 0.0, 0.0, 0.05, 0.0, 0, 0};  // tanky class
+CharacterClass mageClass = {1, 1, 0.0, 0.0, 0.08, 0.0, 0.0, 2, 1};     // decent all-rounder damager
+CharacterClass rogueClass = {0, 1, 0.0, 0.0, 0.04, 0.04, 0.25, 0, 0};  // Looter class, balanced damage & resist w/ luck focus
+CharacterClass demoClass = {0, 2, 0.00, 0.0, 0.00, 0.12, 0.0, 1, 0};   // Fragile but high damage, glass cannon
 
 // Get user input to create a new Character
 Character get_user_input_character();
 
 // Add a Character to the characters array
 Character **add_character(Character **characters, size_t *character_count, Character new_character);
+
+// Print class stats per rank
+void print_class_stats(CharacterClass charClass);
+
+// Select a class predef to view stats
+void select_and_print_class_stats();
 
 // Clear screen function (platform-independent)
 void clear_screen();
@@ -41,7 +57,8 @@ int main() {
         printf("\nCharacter Builder Menu:\n");
         printf("1. Create a new character\n");
         printf("2. Generate character files\n");
-        printf("3. Exit\n");
+        printf("3. Check class stats\n");
+        printf("4. Exit\n");
         printf("Enter your choice: ");
         int choice;
         scanf("%d", &choice);
@@ -70,6 +87,8 @@ int main() {
             printf("Character files generated for %zu characters.\n", character_count);
             // Clear screen after generation
             clear_screen();
+        } else if (choice == CHECK_CLASS_STATS) {
+            select_and_print_class_stats();
         } else if (choice == EXIT) {
             // Free allocated characters
             for (size_t i = 0; i < character_count; i++) {
@@ -103,11 +122,7 @@ Character get_user_input_character() {
     // Buffers for input
     char nameBuffer[128];
     char colorBuffer[32];
-    // Predefined classes copied from ranked_builder defaults
-    CharacterClass meleeClass = {2, 1, 0.08, 0.0, 0.0, 0.0};
-    CharacterClass rangedClass = {1, 1, 0.0, 0.08, 0.0, 0.0};
-    CharacterClass defenseClass = {2, 2, 0.0, 0.0, 0.0, 0.05};
-    CharacterClass mageClass = {1, 1, 0.0, 0.0, 0.08, 0.0};
+
     CharacterClass selectedClass = meleeClass;
 
     // Name: must be lowercase letters and underscores only, underscores not at start/end
@@ -182,7 +197,7 @@ Character get_user_input_character() {
 
     // Class selection
     while (1) {
-        printf("Select a class for your character:\n1. Melee\n2. Ranged\n3. Defense\n4. Mage\nEnter choice: ");
+        printf("Select a class for your character:\n1. Melee\n2. Ranged\n3. Defense\n4. Mage\n5. Rogue\n6. Demo\nEnter choice: ");
         int classChoice = 0;
         if (scanf("%d", &classChoice) != 1) { while (getchar() != '\n'); continue; }
         while (getchar() != '\n');
@@ -191,6 +206,8 @@ Character get_user_input_character() {
             case 2: selectedClass = rangedClass; break;
             case 3: selectedClass = defenseClass; break;
             case 4: selectedClass = mageClass; break;
+            case 5: selectedClass = rogueClass; break;
+            case 6: selectedClass = demoClass; break;
             default: printf("Invalid choice.\n"); continue;
         }
         break;
@@ -212,13 +229,7 @@ Character get_user_input_character() {
     printf("Name: %s\n", newCharacter.name);
     printf("Display Name: %s\nText Color: %s\nSecondary Color: %s\n", newCharacter.displayName, newCharacter.textColor, newCharacter.secondaryColor);
     printf("Number of Ranks: %d\n", newCharacter.ranks);
-    printf("Class Stats per Rank:\n");
-    printf("\tHealth: +%d\n", newCharacter.charClass.healthPerRank);
-    printf("\tArmor: +%d\n", newCharacter.charClass.armorPerRank);
-    printf("\tMelee Damage: +%.2f%%\n", newCharacter.charClass.meleeDamagePerRank * 100);
-    printf("\tRanged Damage: +%.2f%%\n", newCharacter.charClass.rangedDamagePerRank * 100);
-    printf("\tGeneral Damage: +%.2f%%\n", newCharacter.charClass.generalDamagePerRank * 100);
-    printf("\tDamage Resistance: +%.2f%%\n", newCharacter.charClass.damageResistancePerRank * 100);
+    print_class_stats(newCharacter.charClass);
     printf("Are these details correct? (y/n): ");
     char confirm = 'n';
     if (scanf(" %c", &confirm) == 1) { confirm = tolower(confirm); }
@@ -264,4 +275,41 @@ Character **add_character(Character **characters, size_t *character_count, Chara
     // Increment character count
     (*character_count)++;
     return characters;
+}
+
+void print_class_stats(CharacterClass charClass) {
+    printf("Class Stats per Rank:\n");
+    printf("\tHealth: +%d\n", charClass.healthPerRank);
+    printf("\tArmor: +%d\n", charClass.armorPerRank);
+    printf("\tMelee Damage: +%.2f%%\n", charClass.meleeDamagePerRank * 100);
+    printf("\tRanged Damage: +%.2f%%\n", charClass.rangedDamagePerRank * 100);
+    printf("\tGeneral Damage: +%.2f%%\n", charClass.generalDamagePerRank * 100);
+    printf("\tDamage Resistance: +%.2f%%\n", charClass.damageResistancePerRank * 100);
+    printf("\tLuck: +%.2f%%\n", charClass.luckPerRank * 100);
+    printf("\tPrimary Ability Skill: +%d\n", charClass.primaryAbilitySkillPerRank);
+    printf("\tSecondary Ability Skill: +%d\n", charClass.secondaryAbilitySkillPerRank);
+}
+
+void select_and_print_class_stats() {
+    clear_screen();
+    printf("Select a class to view stats:\n");
+    printf("1. Melee\n2. Ranged\n3. Defense\n4. Mage\n5. Rogue\n6. Demo\nEnter choice: ");
+    int classChoice = 0;
+    if (scanf("%d", &classChoice) != 1) { while (getchar() != '\n'); return; }
+    while (getchar() != '\n');
+    CharacterClass selectedClass;
+    switch (classChoice) {
+        case 1: selectedClass = meleeClass; break;
+        case 2: selectedClass = rangedClass; break;
+        case 3: selectedClass = defenseClass; break;
+        case 4: selectedClass = mageClass; break;
+        case 5: selectedClass = rogueClass; break;
+        case 6: selectedClass = demoClass; break;
+        default: printf("Invalid choice.\n"); return;
+    }
+    print_class_stats(selectedClass);
+    // Wait for user to press Enter before clearing screen
+    printf("Press Enter to continue...");
+    scanf("%*c");
+    clear_screen();
 }
