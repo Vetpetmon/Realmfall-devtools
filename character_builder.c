@@ -7,12 +7,11 @@
 #include <ctype.h>
 #include <limits.h>
 
-#ifndef PATH_MAX
-  #ifdef _WIN32
-    #define PATH_MAX 260  // MAX_PATH for classic Win32 paths
-  #else
-    #define PATH_MAX 4096
-  #endif
+
+#ifdef _WIN32
+#define PATH_MAX 260  // MAX_PATH for classic Win32 paths
+#else
+#define PATH_MAX 4096
 #endif
 
 
