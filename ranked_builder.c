@@ -9,6 +9,10 @@
 #include "ranked_builder.h"
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 int mkdir_p(const char *path, mode_t mode) {
     if (path == NULL || *path == '\0') {
         errno = EINVAL;
