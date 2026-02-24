@@ -8,6 +8,7 @@
 
 #ifdef _WIN32
 #include <direct.h>
+typedef int mode_t; // Add this
 #else
 #include <linux/limits.h>
 #endif
