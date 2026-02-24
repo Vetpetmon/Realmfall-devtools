@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 #include <ctype.h>
 
 // Enum for menu choices
