@@ -5,12 +5,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#ifdef _WIN32
-  #include <windows.h>
-  #ifndef PATH_MAX
-    #define PATH_MAX MAX_PATH
+#include <limits.h>
+
+#ifndef PATH_MAX
+  #ifdef _WIN32
+    #define PATH_MAX 260  // MAX_PATH for classic Win32 paths
+  #else
+    #define PATH_MAX 4096
   #endif
 #endif
+
 
 // Enum for menu choices
 enum MenuChoice {
