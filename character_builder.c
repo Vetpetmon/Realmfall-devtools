@@ -4,10 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
 #include <ctype.h>
+#ifdef _WIN32
+  #include <windows.h>
+  #ifndef PATH_MAX
+    #define PATH_MAX MAX_PATH
+  #endif
+#endif
 
 // Enum for menu choices
 enum MenuChoice {
