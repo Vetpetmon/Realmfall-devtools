@@ -199,7 +199,7 @@ Character get_user_input_character() {
     while (1) {
         printf("Select a class for your character:\n1. Melee\n2. Ranged\n3. Defense\n4. Mage\n5. Rogue\n6. Demo\nEnter choice: ");
         int classChoice = 0;
-        if (scanf("%d", &classChoice) != 1) { while (getchar() != '\n'); continue; }
+        if (scanf("%d", &classChoice) != 1) { while (getchar() != '\n') continue; }
         while (getchar() != '\n');
         switch (classChoice) {
             case 1: selectedClass = meleeClass; break;
@@ -218,7 +218,7 @@ Character get_user_input_character() {
     while (1) {
         printf("Enter the number of ranks for your character (5 or 6): ");
         int ranks = 0;
-        if (scanf("%d", &ranks) != 1) { while (getchar() != '\n'); continue; }
+        if (scanf("%d", &ranks) != 1) { while (getchar() != '\n') continue; }
         while (getchar() != '\n');
         if (ranks == 5 || ranks == 6) { newCharacter.ranks = ranks; break; }
         printf("Invalid number of ranks. Please enter 5 or 6.\n");
@@ -295,7 +295,7 @@ void select_and_print_class_stats() {
     printf("Select a class to view stats:\n");
     printf("1. Melee\n2. Ranged\n3. Defense\n4. Mage\n5. Rogue\n6. Demo\nEnter choice: ");
     int classChoice = 0;
-    if (scanf("%d", &classChoice) != 1) { while (getchar() != '\n'); return; }
+    if (scanf("%d", &classChoice) != 1) { while (getchar() != '\n') return; }
     while (getchar() != '\n');
     CharacterClass selectedClass;
     switch (classChoice) {
