@@ -29,6 +29,7 @@ jobs:
         include:
           - os: windows-latest
             c_compiler: gcc
+            cpp_compiler: cl
             cmake_flags: '-DCMAKE_C_FLAGS="/D_CRT_SECURE_NO_WARNINGS" -DCMAKE_CXX_FLAGS="/D_CRT_SECURE_NO_WARNINGS"'
           - os: ubuntu-latest
             c_compiler: gcc
@@ -39,7 +40,6 @@ jobs:
         exclude:
           - os: windows-latest
             c_compiler: clang
-            cpp_compiler: cl
           - os: windows-latest
             c_compiler: clang
           - os: ubuntu-latest
