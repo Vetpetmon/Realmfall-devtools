@@ -781,7 +781,7 @@ void createCharacterOriginJSON(cJSON *jsonObj, Character character) {
     cJSON *powersArray = cJSON_CreateArray();
     // Will need to assemble power string (resource location) based on character name
     char defPower[200];
-    sprintf(defPower, "bisccel:ranks/%s/def", character.name); // This sets stars to 0, sets rank scoreboards, etc.
+    sprintf(defPower, "bisccel:flavors/%s/def", character.name); // This sets stars to 0, sets rank scoreboards, etc.
     cJSON_AddItemToArray(powersArray, cJSON_CreateString(defPower));
     // Add to main jsonObj
     cJSON_AddItemToObject(jsonObj, "powers", powersArray);
