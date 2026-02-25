@@ -380,14 +380,14 @@ void createEvoJSON(cJSON *jsonObj, Character character, int evoStage) {
     cJSON *actionsArray = cJSON_CreateArray();
     // First action: execute command (set origin rank)
     char commandStr[300];
-    sprintf(commandStr, "origin set @s bisccel:rank bisccel:ranks/%s/%dstar", character.name, evoStage + 1);
+    sprintf(commandStr, "origin set @a bisccel:rank bisccel:ranks/%s/%dstar", character.name, evoStage + 1);
     cJSON *action1 = create_execute_command_action(commandStr);
     cJSON_AddItemToArray(actionsArray, action1);
 
     // Second action: run command, tellraw
     // Second action: tellraw (execute command)
     char tellrawCommand[400];
-    sprintf(tellrawCommand, "tellraw @s [{\"text\":\"<\"},{\"selector\":\"@s\",\"bold\":true,\"color\":\"%s\"},{\"text\":\"> PLACEHOLDER \"},{\"text\":\"\\n\"},{\"selector\":\"@s\",\"italic\":true,\"color\":\"%s\"},{\"text\":\" has upgraded to %d star!\",\"italic\":true,\"color\":\"%s\"}]", character.textColor, character.secondaryColor, evoStage + 1, character.secondaryColor);
+    sprintf(tellrawCommand, "tellraw @a [{\"text\":\"<\"},{\"selector\":\"@s\",\"bold\":true,\"color\":\"%s\"},{\"text\":\"> PLACEHOLDER \"},{\"text\":\"\\n\"},{\"selector\":\"@s\",\"italic\":true,\"color\":\"%s\"},{\"text\":\" has upgraded to %d star!\",\"italic\":true,\"color\":\"%s\"}]", character.textColor, character.secondaryColor, evoStage + 1, character.secondaryColor);
     cJSON *action2 = create_execute_command_action(tellrawCommand);
     cJSON_AddItemToArray(actionsArray, action2);
 

@@ -22,8 +22,10 @@ add_library(ranked_builder STATIC ranked_builder.c)
 # (like the character_maker executable) get the proper link order and symbols.
 target_link_libraries(ranked_builder PUBLIC cjson)
 
-# Main executable
-add_executable(character_maker character_builder.c)
+# Build character_builder as a library that depends on ranked_builder
+add_library(character_builder STATIC character_builder.c)
+target_link_libraries(character_builder PUBLIC ranked_builder)
 
-# Link the ranked_builder library; it already pulls in cjson via PUBLIC linkage above.
-target_link_libraries(character_maker PRIVATE ranked_builder)
+# Main executable: use devkit.c as the entry point and link the builder
+add_executable(devkit devkit.c)
+target_link_libraries(devkit PRIVATE character_builder)

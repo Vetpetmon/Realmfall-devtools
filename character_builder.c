@@ -1,5 +1,6 @@
 #include "ranked_builder.h"
 #include "rfcharacters.h"
+#include "character_builder.h"
 #include "cjson/cJSON.h" // Include cJSON library for JSON handling
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +15,7 @@
 
 
 // Enum for menu choices
-enum MenuChoice {
+enum MenuChoice_CharBuilder {
     CREATE_CHARACTER = 1,
     GENERATE_FILES = 2,
     CHECK_CLASS_STATS = 3,
@@ -30,20 +31,6 @@ CharacterClass mageClass = {1, 1, 0.0, 0.0, 0.08, 0.0, 0.0, 2, 1};     // decent
 CharacterClass rogueClass = {0, 1, 0.0, 0.0, 0.04, 0.04, 0.25, 0, 0};  // Looter class, balanced damage & resist w/ luck focus
 CharacterClass demoClass = {0, 2, 0.00, 0.0, 0.00, 0.12, 0.0, 1, 0};   // Fragile but high damage, glass cannon
 
-// Get user input to create a new Character
-Character get_user_input_character();
-
-// Add a Character to the characters array
-Character **add_character(Character **characters, size_t *character_count, Character new_character);
-
-// Print class stats per rank
-void print_class_stats(CharacterClass charClass);
-
-// Select a class predef to view stats
-void select_and_print_class_stats();
-
-// Clear screen function (platform-independent)
-void clear_screen();
 
 // Clear screen implementation
 void clear_screen() {
@@ -54,7 +41,7 @@ void clear_screen() {
 #endif
 }
 
-int main() {
+int char_builder_main_loop() {
     // Array of characters to build
     Character **characters = NULL;
     size_t character_count = 0;
