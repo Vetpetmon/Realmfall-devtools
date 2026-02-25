@@ -62,14 +62,14 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: character_maker-windows-${{ matrix.build_type }}
-        path: ${{ github.workspace }}\output\**\character_maker*.exe
+        path: ${{ github.workspace }}\output\**\devkit*.exe
 
     - name: Upload artifact (Linux)
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
         name: character_maker-linux-${{ matrix.build_type }}
-        path: ${{ github.workspace }}/output/character_maker
+        path: ${{ github.workspace }}/output/devkit
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
